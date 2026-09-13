@@ -1,7 +1,7 @@
 {
   "name": "herdr-wt",
-  "description": "herdr worktree 기반 이슈 작업 준비·마감",
-  "version": "0.1.0",
+  "description": "herdr worktree 기반 이슈 작업 준비·마감 (Jira · GitHub Issues)",
+  "version": "0.2.0",
   "author": {
     "name": "junghosuh"
   }

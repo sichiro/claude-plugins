@@ -93,6 +93,6 @@ GitHub Issues 저장소는 `{ "base": "main", "tracker": { "type": "github" } }`
 
 - `agent start` 는 **이미 프롬프트에 있는 shell pane** 을 요구한다. 4단계가 만든 root pane 이 아직 프롬프트에 오지 않았으면 `agent_pane_busy` 로 실패한다 — `worktree create` 직후에 바로 부르면 그렇게 된다 (2026-09-08 실측. 2026-08-18 에는 바로 받았다). 실패하면 `herdr pane list --workspace <ID>` 로 프롬프트 상태를 확인한 뒤 같은 명령을 다시 실행한다
 - 에이전트 이름은 `[a-z][a-z0-9_-]{0,31}` 이고 살아 있는 에이전트 사이에서 유일해야 한다. 같은 이슈로 두 번 부르면 `herdr agent list` 로 기존 것을 먼저 확인한다
-- **`codex` 로 띄운 세션에는 가드 훅도, `CLAUDE.md`·`.claude/rules/` 도 걸리지 않는다.** `.claude/hooks/` 의 가드 훅은 Claude Code 훅이고(`ls .claude/hooks/`), codex 가 읽는 `AGENTS.md` 는 이 저장소에 없다. 자격증명 3채널·한글 JQL·develop 체크아웃 불가·패치 manifest·용어 정본이 **전부 없는 채로 뜬다.** `--yolo` 는 샌드박스까지 없애므로 그 세션에 남는 방어는 사람이다. **지침 쪽은 저장소 루트에 `AGENTS.md` 를 두면 돌아온다** — codex 가 그 파일을 읽는다. 훅은 그래도 돌아오지 않으니 그 세션이 커밋하기 전에 patches lint 와 자격증명 규칙은 사람이 확인한다
+- **`codex` 로 띄운 세션에는 Claude Code 의 가드 훅도 저장소 지침도 걸리지 않는다.** 훅은 Claude Code 전용이고, codex 가 읽는 `AGENTS.md` 를 둔 저장소가 아니면 지침도 없는 채로 뜬다. `--yolo` 는 샌드박스까지 없애므로 그 세션에 남는 방어는 사람이다. **지침 쪽은 저장소 루트에 `AGENTS.md` 를 두면 돌아온다** — codex 가 그 파일을 읽는다. 훅은 그래도 돌아오지 않으니, 그 세션이 커밋하기 전에 저장소가 훅으로 강제하던 규칙은 사람이 확인한다
 - **base 브랜치는 어떤 worktree 에서도 체크아웃되지 않는다.** 메인 체크아웃이 잡고 있어 git 이 거부한다 — `fatal: 'develop' is already used by worktree at ...` (2026-08-18 실측). 그래서 그 worktree 의 결과는 로컬 병합이 아니라 push 후 PR 로 간다
 - **메인 체크아웃의 미커밋 변경을 임의로 처리하지 않는다.** 그 파일을 worktree 에서도 고쳤다면 병합이 거부된다. 되돌리거나 stash 하지 말고 사용자에게 확인을 구한다

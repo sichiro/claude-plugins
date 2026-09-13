@@ -125,7 +125,7 @@ for a in d['result']['agents']:
 herdr worktree list
 ```
 
-**이 목록에는 메인 체크아웃(`branch: develop`, `.../Projects/MasterGirl/mgr-servers`)과 다른 사람의 feature worktree 가 함께 들어 있다.** 잘못 고른 `--force` 는 그것들을 유실시킨다. `path` 가 지금 작업 중인 worktree 와 일치하는 행의 `open_workspace_id` 만 쓴다.
+**이 목록에는 메인 체크아웃과 다른 사람의 feature worktree 가 함께 들어 있다.** 잘못 고른 `--force` 는 그것들을 유실시킨다. `path` 가 지금 작업 중인 worktree 와 일치하는 행의 `open_workspace_id` 만 쓴다.
 
 지우기 전에 두 가지를 확인한다.
 
