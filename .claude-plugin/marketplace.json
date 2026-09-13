@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "claude-plugins",
+  "description": "개인 Claude Code 플러그인 모음",
+  "owner": {
+    "name": "junghosuh",
+    "url": "https://github.com/junghosuh"
+  },
+  "plugins": [
+    {
+      "name": "herdr-wt",
+      "description": "herdr worktree 로 이슈 하나를 준비하고(/wt) 에픽을 팬아웃하고(/wt-epic) 마감한다(wt-done). Jira 연동은 저장소별 설정 파일에서 읽는다",
+      "source": "./plugins/herdr-wt",
+      "category": "productivity"
+    }
+  ]
+}
