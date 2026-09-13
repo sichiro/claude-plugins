@@ -42,7 +42,7 @@ argument-hint: <이슈키> [에이전트종류] [옮겨줘]
 
    **`--path-format=absolute` 를 빼지 않는다.** 이 치환이 일어나는 셸은 4단계 때문에 메인 체크아웃에 있는데, 거기서 `--git-common-dir` 은 상대경로 `.git` 을 낸다 (2026-09-11 실측 — 링크드 worktree 안에서만 절대경로가 나온다). codex 는 그것을 자기 cwd 인 새 worktree 기준으로 푸는데 그 자리의 `.git` 은 디렉터리가 아니라 gitdir 포인터 파일이라 열리지 않는다.
 
-   **기본이 `--yolo` 인 것은 그렇게 정했기 때문이다** — `--yolo` 는 `~/.ssh`·메인 체크아웃·**같은 저장소의 다른 worktree 전부**를 열고 `--add-dir` 은 git 디렉터리 하나만 여니, 범위를 좁히려면 이 인자로 바꾼다. 다른 worktree 가 열린다는 것은 `wt-epic` 이 팬아웃한 옆 세션의 미커밋 변경에까지 닿는다는 뜻이다.
+   **기본이 `--yolo` 인 것은 그렇게 정했기 때문이다** — `--yolo` 는 `~/.ssh`·메인 체크아웃·**같은 저장소의 다른 worktree 전부**를 열고 `--add-dir` 은 git 디렉터리 하나만 여니, 범위를 좁히려면 이 인자로 바꾼다. 다른 worktree 가 열린다는 것은 같은 저장소에서 병행 중인 옆 세션의 미커밋 변경에까지 닿는다는 뜻이다.
 
    `--yolo` 는 `--dangerously-bypass-approvals-and-sandbox` 의 별칭이다. **`codex --help` 에는 나오지 않으니** 없는 플래그로 오해하지 않는다. herdr 은 `--` 뒤 인자를 그대로 argv 에 넘긴다 (2026-09-11 실측 — 응답의 `argv` 가 `["codex","--yolo"]` 였고 화면에 `permissions: YOLO mode` 가 떴다).
 7. 인자에 `옮겨줘` 가 있으면 `herdr agent focus <이슈키 소문자>`
@@ -52,7 +52,7 @@ argument-hint: <이슈키> [에이전트종류] [옮겨줘]
    transitionJiraIssue(issueIdOrKey: "<이슈키>", transition: {id: "31"})
    ```
 
-   **전환 id 로 던진다** — 상태 이름(`"진행 중"`)을 넣을 자리가 없다. 표는 wt-done 에 있다: `.claude/skills/wt-done/SKILL.md`
+   **전환 id 로 던진다** — 상태 이름(`"진행 중"`)을 넣을 자리가 없다. 표는 `herdr-wt:wt-done` 스킬 2단계에 있다
 
    **2번에서 조회한 상태가 완료(`10092`)면 전환하지 않는다.** 전환 `31` 은 `isGlobal` 이라 완료 이슈에도 그대로 걸려 **조용히 재오픈시킨다.** 게다가 완료 이슈는 `resolution` 이 채워져 있는데 이 전환은 `hasScreen: false` 라 그 값을 비울 화면이 없다 — 상태만 진행 중이고 `resolution` 은 완료로 남을 수 있다. 재오픈은 사용자가 판단할 일이니 건너뛰고 그 사실을 보고에 적는다.
 
@@ -66,4 +66,5 @@ argument-hint: <이슈키> [에이전트종류] [옮겨줘]
 - `agent start` 는 **이미 프롬프트에 있는 shell pane** 을 요구한다. 4단계가 만든 root pane 이 아직 프롬프트에 오지 않았으면 `agent_pane_busy` 로 실패한다 — `worktree create` 직후에 바로 부르면 그렇게 된다 (2026-09-08 실측. 2026-08-18 에는 바로 받았다). 실패하면 `herdr pane list --workspace <ID>` 로 프롬프트 상태를 확인한 뒤 같은 명령을 다시 실행한다
 - 에이전트 이름은 `[a-z][a-z0-9_-]{0,31}` 이고 살아 있는 에이전트 사이에서 유일해야 한다. 같은 이슈로 두 번 부르면 `herdr agent list` 로 기존 것을 먼저 확인한다
 - **`codex` 로 띄운 세션에는 가드 훅도, `CLAUDE.md`·`.claude/rules/` 도 걸리지 않는다.** `.claude/hooks/` 의 가드 훅은 Claude Code 훅이고(`ls .claude/hooks/`), codex 가 읽는 `AGENTS.md` 는 이 저장소에 없다. 자격증명 3채널·한글 JQL·develop 체크아웃 불가·패치 manifest·용어 정본이 **전부 없는 채로 뜬다.** `--yolo` 는 샌드박스까지 없애므로 그 세션에 남는 방어는 사람이다. **지침 쪽은 저장소 루트에 `AGENTS.md` 를 두면 돌아온다** — codex 가 그 파일을 읽는다. 훅은 그래도 돌아오지 않으니 그 세션이 커밋하기 전에 patches lint 와 자격증명 규칙은 사람이 확인한다
-- **develop 은 어떤 worktree 에서도 체크아웃되지 않는다.** 그 worktree 의 결과는 로컬 병합이 아니라 push 후 PR 로 간다 — `.claude/rules/worktree.md`
+- **base 브랜치는 어떤 worktree 에서도 체크아웃되지 않는다.** 메인 체크아웃이 잡고 있어 git 이 거부한다 — `fatal: 'develop' is already used by worktree at ...` (2026-08-18 실측). 그래서 그 worktree 의 결과는 로컬 병합이 아니라 push 후 PR 로 간다
+- **메인 체크아웃의 미커밋 변경을 임의로 처리하지 않는다.** 그 파일을 worktree 에서도 고쳤다면 병합이 거부된다. 되돌리거나 stash 하지 말고 사용자에게 확인을 구한다

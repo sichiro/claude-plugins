@@ -71,7 +71,7 @@ gh pr merge <번호> --squash
 
 **원격 브랜치는 따로 지우지 않는다.** 이 저장소는 `deleteBranchOnMerge` 가 켜져 있어 머지와 함께 사라진다(2026-08-24 실측 — `gh repo view --json deleteBranchOnMerge` 가 `true`). `git push origin --delete` 를 이어 붙이면 `error: unable to delete ...: remote ref does not exist` 가 발생한다. 아래 확인에서 `2` 가 아닐 때만 지운다.
 
-**`--delete-branch` 도 쓰지 않는다.** 그 플래그는 머지 뒤 로컬 `develop` 을 체크아웃하려 하는데, `develop` 은 메인 체크아웃이 잡고 있어 **어느 worktree 에서도 반드시 실패한다**(`.claude/rules/worktree.md`). 설정이 자동으로 지우므로 필요도 없다.
+**`--delete-branch` 도 쓰지 않는다.** 그 플래그는 머지 뒤 로컬 `develop` 을 체크아웃하려 하는데, `develop` 은 메인 체크아웃이 잡고 있어 **어느 worktree 에서도 반드시 실패한다**(메인 체크아웃이 `develop` 을 잡고 있다 — 2026-08-18 실측). 설정이 자동으로 지우므로 필요도 없다.
 
 > 이미 `--delete-branch` 로 실행해 `failed to run git: fatal: 'develop' is already used by worktree at ...` 를 봤다면, **머지 자체는 성공해 있다.** 에러만 보고 재시도하지 말고 아래 확인으로 넘어간다.
 
@@ -86,7 +86,7 @@ git ls-remote --exit-code --heads origin <브랜치> >/dev/null; echo $?
 
 ## 2. Jira 완료 + 결과 코멘트
 
-**0단계에서 이미 완료였으면 전환하지 않고 코멘트만 남긴다.** 여는 쪽에도 같은 가드가 있다 — `.claude/commands/wt.md` 8단계는 완료 이슈에 전환 `31` 을 적용하면 `isGlobal` 이라 조용히 재오픈된다고 적었다. 닫는 쪽도 같은 자리에 둔다.
+**0단계에서 이미 완료였으면 전환하지 않고 코멘트만 남긴다.** 여는 쪽에도 같은 가드가 있다 — `/wt` 8단계는 완료 이슈에 전환 `31` 을 적용하면 `isGlobal` 이라 조용히 재오픈된다고 적었다. 닫는 쪽도 같은 자리에 둔다.
 
 **전환 id 로 지정한다.** 상태 이름(`"완료"`)으로 지정할 자리가 없고, 이름으로 찾으려 하면 통하지 않는다 — CLAUDE.md 의 JQL 규칙과 같은 이유다.
 
@@ -171,7 +171,6 @@ workspace 가 닫히면서 **이 세션도 함께 종료된다.** 그래서 반�
 
 **0단계는 승인을, 4단계는 재확인을 한다. 재확인 결과가 0단계와 같으면 되묻지 않고, 다르면 멈추고 묻는다.** 0단계 승인은 "이상 없음"에 대한 승인이지 무슨 일이 있어도 지우라는 위임이 아니다. 이 명령만은 **어느 allowlist 에도 넣지 않아** 권한 프롬프트가 마지막 안전장치로 한 번 표시된다 — `.claude/settings.json` 에도, `.claude/settings.local.json` 에도 없다.
 
-`EnterWorktree` 로 만든 worktree 라면 이 명령이 아니다. `.claude/rules/worktree.md` 의 `ExitWorktree` 절차를 따른다.
 
 ## 이 스킬을 개선하려면 — transcript 는 세션이 종료돼도 남는다
 
@@ -225,7 +224,7 @@ ls -t ~/.claude/projects/*mgr-servers-*<이슈키 소문자>-*/*.jsonl
 - `git ls-remote --heads <없는 원격> | wc -l` 이 `0` 을 반환했다(종료코드 `128`)
 - PR #46 을 머지한 뒤 `git push origin --delete` 가 `remote ref does not exist` 로 떨어졌다 — `deleteBranchOnMerge` 가 이미 지운 뒤였다
 
-명령은 4번의 `worktree remove` 를 뺀 전부를 실행해 확인했다 — 그것은 `.claude/rules/worktree.md` 에 있는 것을 옮겼다.
+명령은 4번의 `worktree remove` 를 뺀 전부를 실행해 확인했다 — 그것은 원본 저장소의 worktree 규칙 문서에서 옮겼다.
 
 클라 후속 점검(0단계 표의 마지막 행·2단계 인수인계 절)은 2026-08-27 에 더했다 — MGR-182 가 proto 4파일을 바꾸고도 클라 이슈 없이 닫혔다. `text ~` JQL·lookupJiraAccountId·proto diff 명령은 그날 실측했다.
 
