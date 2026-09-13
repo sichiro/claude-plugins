@@ -33,7 +33,7 @@ herdr agent list         # 그 id 로 걸러 살아 있는 pane 을 센다
 
 **`gh pr view` 에 번호를 넣지 않는다.** 번호를 넣으려면 PR 이 있다는 것을 이미 알아야 해서 "PR 이 있나"를 묻지 못한다. 번호를 빼면 현재 브랜치의 PR 을 찾아 `number` 까지 함께 제공한다 — 1단계의 머지가 그 값을 쓴다. PR 이 없으면 `no pull requests found for branch "..."` 와 종료코드 `1` 이다 (2026-08-24 실측 — PR #52 가 붙은 worktree 와 PR 이 없는 develop 양쪽에서 확인).
 
-`tracker` 가 있으면 references 의 「조회」로 현재 상태를 확인한다. 없으면 이 점검을 생략한다. `@{u}` 는 push 하지 않은 브랜치에서 `fatal` 로 실패하므로 폴백을 붙인 채로 쓴다 (2026-08-24 실측 — 붙이면 종료코드 `0`).
+`tracker` 가 있으면 `${CLAUDE_PLUGIN_ROOT}/references/trackers.md` 의 「조회」로 현재 상태를 확인한다. 없으면 이 점검을 생략한다. `@{u}` 는 push 하지 않은 브랜치에서 `fatal` 로 실패하므로 폴백을 붙인 채로 쓴다 (2026-08-24 실측 — 붙이면 종료코드 `0`).
 
 **조회만 하지 않는다. 어떤 값에서 멈추는지가 판정이다.**
 
