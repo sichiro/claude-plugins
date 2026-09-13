@@ -28,7 +28,7 @@ description: 이슈 작업이 끝나 정리할 때 사용한다. "정리해줘" 
 | 트래커 | 되돌리는 법 | 예 |
 |---|---|---|
 | Jira | `tracker.project` 를 접두사로 붙이고 하이픈을 넣는다 | `mgr135` → `MGR-135` |
-| GitHub | 숫자만 남긴다 | `i135` → `135` |
+| GitHub | 숫자만 남긴다 | `135` → `135` |
 
 되돌린 값이 실제 이슈와 맞는지는 「조회」로 확인한다 — 맞지 않으면 사용자에게 묻는다.
 
@@ -67,7 +67,7 @@ herdr agent list         # 그 id 로 걸러 살아 있는 pane 을 센다
 
 **`herdr agent list` 는 다른 사람 작업까지 전부 반환한다** — `workspace_id` 로 거르지 않으면 남의 pane 을 내 것으로 센다. 거르는 코드는 3단계에 있다.
 
-**CI 와 리뷰는 조회하되, 비어 있음을 실패로 읽지 않는다.** `.github/workflows/` 가 없거나 코드리뷰를 GitHub 에 남기지 않는 저장소에서는 `statusCheckRollup`·`reviewDecision` 이 **항상 빈다** — 그때는 넘어간다. 값이 있고 실패가 섞여 있으면 **멈추고 묻는다.** 1단계는 되돌릴 수 없다.
+**CI 와 리뷰는 조회하되, 비어 있음을 실패로 읽지 않는다.** `.github/workflows/` 가 없거나 코드리뷰를 GitHub 에 남기지 않는 저장소에서는 `statusCheckRollup`·`reviewDecision` 이 **항상 빈다** — 그때는 넘어간다. 값이 있고 실패가 섞여 있으면 **멈추고 묻는다.** 진행 중인 체크가 있으면 몇 초 뒤 한 번 다시 조회하고, 그래도 진행 중이면 그 사실을 승인 질문에 적는다. 1단계는 되돌릴 수 없다.
 
 조사 결과를 **`AskUserQuestion` 한 번으로 묶어** 승인받는다. 걸린 것이 없어도 그 사실을 적어 진행 여부를 묻는다 — 사용자가 물을 것이 남아 있는지는 명령으로 알 수 없다.
 
@@ -81,7 +81,7 @@ gh pr merge <번호> --squash
 
 **머지 방식은 0단계에서 얻은 값으로 정한다.** `squashMergeAllowed` 가 `true` 면 `--squash` 를 쓴다. `false` 면 그 저장소가 허용하는 방식(`--merge` 또는 `--rebase`)으로 바꾼다 — 허용되지 않은 방식은 거부된다.
 
-**원격 브랜치는 따로 지우지 않는다.** 이 저장소는 `deleteBranchOnMerge` 가 켜져 있어 머지와 함께 사라진다(2026-08-24 실측 — `gh repo view --json deleteBranchOnMerge` 가 `true`). `git push origin --delete` 를 이어 붙이면 `error: unable to delete ...: remote ref does not exist` 가 발생한다. 아래 확인에서 `2` 가 아닐 때만 지운다.
+**원격 브랜치는 따로 지우지 않는다.** 0단계에서 조회한 `deleteBranchOnMerge` 가 `true` 면 머지와 함께 사라진다(2026-08-24 실측 — `gh repo view --json deleteBranchOnMerge` 가 `true`). 그때 `git push origin --delete` 를 이어 붙이면 `error: unable to delete ...: remote ref does not exist` 가 발생한다. `false` 든 `true` 든 판정은 아래 확인의 종료코드로 한다 — `2` 가 아닐 때만 지운다.
 
 **`--delete-branch` 도 쓰지 않는다.** 그 플래그는 머지 뒤 로컬 base 브랜치를 체크아웃하려 하는데, base 브랜치는 메인 체크아웃이 잡고 있어 **어느 worktree 에서도 반드시 실패한다**(메인 체크아웃이 `develop` 을 잡고 있다 — 2026-08-18 실측). 설정이 자동으로 지우므로 필요도 없다.
 
