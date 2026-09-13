@@ -82,7 +82,7 @@ git ls-remote --exit-code --heads origin <브랜치> >/dev/null; echo $?
 
 ## 2. 트래커 완료 + 결과 코멘트
 
-**0단계에서 이미 완료였으면 전환하지 않고 코멘트만 남긴다.** 여는 쪽에도 같은 가드가 있다.
+**0단계에서 이미 완료였으면 전환하지 않고 코멘트만 남긴다.** 여는 쪽에도 같은 가드가 있다 — `herdr-wt:wt` 스킬 8단계다. 닫는 쪽도 같은 자리에 둔다.
 
 명령은 references 의 「완료 전환」 행이다. Jira 의 전환 id 는 `wt.json` 의 `tracker.transitions.done` 에서 읽는다.
 
