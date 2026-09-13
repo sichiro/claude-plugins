@@ -9,14 +9,22 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 errors = []
 
 # 1. 매니페스트가 유효한 JSON 이고, 가리키는 source 가 실재한다
-market = json.loads((ROOT / ".claude-plugin/marketplace.json").read_text())
-for entry in market["plugins"]:
+def load_json(path, label):
+    try:
+        return json.loads(path.read_text())
+    except FileNotFoundError:
+        errors.append(f"{label}: 파일이 없다 — {path}")
+    except json.JSONDecodeError as exc:
+        errors.append(f"{label}: JSON 이 깨졌다 — {exc}")
+    return None
+
+market = load_json(ROOT / ".claude-plugin/marketplace.json", "marketplace.json") or {}
+for entry in market.get("plugins", []):
     src = ROOT / entry["source"]
     if not src.is_dir():
         errors.append(f"marketplace.json: source 가 없다 — {entry['source']}")
-    manifest = src / ".claude-plugin/plugin.json"
-    if manifest.is_file():
-        json.loads(manifest.read_text())
+        continue
+    load_json(src / ".claude-plugin/plugin.json", f"{entry['name']}/plugin.json")
 
 # 2. 설치처에 없는 저장소 경로를 참조하지 않는다
 STALE = re.compile(r"`\.claude/(rules|commands|skills)/")
@@ -38,10 +46,11 @@ for doc in (ROOT / "plugins").rglob("*.md"):
 
 # 4. 모든 SKILL.md 에 name 과 description 이 있다
 for skill in (ROOT / "plugins").rglob("skills/*/SKILL.md"):
-    head = skill.read_text().split("---")[1] if skill.read_text().startswith("---") else ""
-    for key in ("name:", "description:"):
-        if key not in head:
-            errors.append(f"{skill.relative_to(ROOT)}: frontmatter 에 {key} 가 없다")
+    text = skill.read_text()
+    head = text.split("---")[1] if text.startswith("---") else ""
+    for key in ("name", "description"):
+        if not re.search(rf"^{key}:", head, re.M):
+            errors.append(f"{skill.relative_to(ROOT)}: frontmatter 에 {key}: 가 없다")
 
 if errors:
     print("\n".join(errors))
