@@ -19,6 +19,8 @@ def load_json(path, label):
     return None
 
 market = load_json(ROOT / ".claude-plugin/marketplace.json", "marketplace.json") or {}
+if not market.get("plugins"):
+    errors.append("marketplace.json: plugins 가 비어 있다")
 for entry in market.get("plugins", []):
     name = entry.get("name", "<이름 없음>")
     source = entry.get("source")
@@ -50,12 +52,16 @@ for doc in (ROOT / "plugins").rglob("*.md"):
             errors.append(f"{rel}: 참조 대상이 없다 — {m.group(1)}")
 
 # 4. 모든 SKILL.md 에 name 과 description 이 있다
+skill_count = 0
 for skill in (ROOT / "plugins").rglob("skills/*/SKILL.md"):
+    skill_count += 1
     text = skill.read_text()
     head = text.split("---")[1] if text.startswith("---") else ""
     for key in ("name", "description"):
         if not re.search(rf"^{key}:", head, re.M):
             errors.append(f"{skill.relative_to(ROOT)}: frontmatter 에 {key}: 가 없다")
+if skill_count == 0:
+    errors.append("SKILL.md 를 하나도 찾지 못했다")
 
 if errors:
     print("\n".join(errors))

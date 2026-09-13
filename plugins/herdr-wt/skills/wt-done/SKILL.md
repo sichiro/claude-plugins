@@ -19,12 +19,26 @@ description: 이슈 작업이 끝나 정리할 때 사용한다. "정리해줘" 
 
 **묻는 것은 0단계 한 번뿐이다.** 거기서 승인을 받으면 1~4단계는 되묻지 않고 끝까지 진행한다.
 
+## 설정을 먼저 읽는다
+
+`.claude/wt.json` 을 읽는다. 없으면 트래커 단계(0단계의 상태 점검·2단계)를 전부 생략하고 머지와 정리만 수행한다.
+
+**이슈 식별자는 브랜치명에서 되돌린다.** 브랜치는 `<종류>/<슬러그>-<주제어>` 이고 슬러그를 트래커별로 되돌린다.
+
+| 트래커 | 되돌리는 법 | 예 |
+|---|---|---|
+| Jira | `tracker.project` 를 접두사로 붙이고 하이픈을 넣는다 | `mgr135` → `MGR-135` |
+| GitHub | 숫자만 남긴다 | `i135` → `135` |
+
+되돌린 값이 실제 이슈와 맞는지는 「조회」로 확인한다 — 맞지 않으면 사용자에게 묻는다.
+
 ## 0. 사전 점검 — 물을 기회는 여기뿐이다
 
 4단계가 이 세션을 종료한다. **마감을 시작하기 전에 아래 표를 한 번에 조사한다.**
 
 ```bash
-gh pr view --json number,state,mergeable,mergeStateStatus
+gh pr view --json number,state,mergeable,mergeStateStatus,statusCheckRollup,reviewDecision
+gh repo view --json squashMergeAllowed,mergeCommitAllowed,rebaseMergeAllowed,deleteBranchOnMerge
 git status --short
 git log --oneline @{u}..HEAD 2>/dev/null || echo "upstream 미설정 — 아직 push 하지 않았다"
 herdr pane current       # 내 workspace_id
@@ -42,16 +56,18 @@ herdr agent list         # 그 id 로 걸러 살아 있는 pane 을 센다
 | PR 이 있나 | 종료코드 `0` | `1` 이면 PR 이 없다. 멈추고 묻는다 |
 | `state` | `OPEN` | `MERGED` 면 1단계를 건너뛴다. `CLOSED` 면 멈추고 묻는다 |
 | `mergeable` | `MERGEABLE` | `CONFLICTING` 이면 머지되지 않는다. `UNKNOWN` 은 아래를 따른다 |
+| 머지 방식 | `squashMergeAllowed` 가 `true` | `false` 면 그 저장소가 허용하는 방식을 쓴다 |
 | `git status --short` | 빈 출력 | 미커밋·untracked 는 worktree 와 함께 사라진다 |
 | 미푸시 커밋 | 없음 | 커밋은 했는데 PR 에 없다 |
 | 트래커 상태 | 완료가 아님 | 이미 완료면 2단계의 전환을 건너뛴다. `tracker` 가 없으면 이 행을 생략한다 |
+| CI·리뷰 | 비었거나 통과 | 실패가 있으면 멈추고 묻는다 |
 | 내 workspace 의 다른 에이전트 | 없음 | 4단계가 그 pane 들을 함께 종료한다 — 리뷰어 출력이 사라진다 |
 
 **`mergeable: UNKNOWN` 을 "머지 불가"로 읽지 않는다.** GitHub 이 mergeability 를 비동기로 계산해서 **갓 push 한 PR 과 이미 머지된 PR 이 둘 다 `UNKNOWN`** 이다 (2026-08-24 실측 — PR #52 가 `state: MERGED` 인 채 `mergeable: UNKNOWN`·`mergeStateStatus: UNKNOWN` 이었다). `wt-done` 은 보통 push 직후에 호출되므로 드물지 않다. **먼저 `state` 로 가른다** — `MERGED` 면 끝난 것이고, `OPEN` 인데 `UNKNOWN` 이면 몇 초 뒤 한 번 다시 조회한다. 그래도 `UNKNOWN` 이면 그 사실을 승인 질문에 적는다.
 
 **`herdr agent list` 는 다른 사람 작업까지 전부 반환한다** — `workspace_id` 로 거르지 않으면 남의 pane 을 내 것으로 센다. 거르는 코드는 3단계에 있다.
 
-**CI 와 PR 리뷰는 조회하지 않는다.** 이 저장소는 `.github/workflows/` 가 없고 코드리뷰가 GitHub 에 남지 않아 `statusCheckRollup`·`reviewDecision`·`reviews`·`comments` 가 **항상 빈다** (2026-08-24 PR #45·#46·#47·#50 실측 — 넷 모두 빈 값이었다). 조회하면 언제나 "이상 없음"이 나오는 죽은 점검이다.
+**CI 와 리뷰는 조회하되, 비어 있음을 실패로 읽지 않는다.** `.github/workflows/` 가 없거나 코드리뷰를 GitHub 에 남기지 않는 저장소에서는 `statusCheckRollup`·`reviewDecision` 이 **항상 빈다** — 그때는 넘어간다. 값이 있고 실패가 섞여 있으면 **멈추고 묻는다.** 1단계는 되돌릴 수 없다.
 
 조사 결과를 **`AskUserQuestion` 한 번으로 묶어** 승인받는다. 걸린 것이 없어도 그 사실을 적어 진행 여부를 묻는다 — 사용자가 물을 것이 남아 있는지는 명령으로 알 수 없다.
 
@@ -63,11 +79,11 @@ herdr agent list         # 그 id 로 걸러 살아 있는 pane 을 센다
 gh pr merge <번호> --squash
 ```
 
-**`--squash` 를 생략한다면 그것은 틀린 것이다.** 이 저장소는 squash 병합만 허용한다.
+**머지 방식은 0단계에서 얻은 값으로 정한다.** `squashMergeAllowed` 가 `true` 면 `--squash` 를 쓴다. `false` 면 그 저장소가 허용하는 방식(`--merge` 또는 `--rebase`)으로 바꾼다 — 허용되지 않은 방식은 거부된다.
 
 **원격 브랜치는 따로 지우지 않는다.** 이 저장소는 `deleteBranchOnMerge` 가 켜져 있어 머지와 함께 사라진다(2026-08-24 실측 — `gh repo view --json deleteBranchOnMerge` 가 `true`). `git push origin --delete` 를 이어 붙이면 `error: unable to delete ...: remote ref does not exist` 가 발생한다. 아래 확인에서 `2` 가 아닐 때만 지운다.
 
-**`--delete-branch` 도 쓰지 않는다.** 그 플래그는 머지 뒤 로컬 `develop` 을 체크아웃하려 하는데, `develop` 은 메인 체크아웃이 잡고 있어 **어느 worktree 에서도 반드시 실패한다**(메인 체크아웃이 `develop` 을 잡고 있다 — 2026-08-18 실측). 설정이 자동으로 지우므로 필요도 없다.
+**`--delete-branch` 도 쓰지 않는다.** 그 플래그는 머지 뒤 로컬 base 브랜치를 체크아웃하려 하는데, base 브랜치는 메인 체크아웃이 잡고 있어 **어느 worktree 에서도 반드시 실패한다**(메인 체크아웃이 `develop` 을 잡고 있다 — 2026-08-18 실측). 설정이 자동으로 지우므로 필요도 없다.
 
 > 이미 `--delete-branch` 로 실행해 `failed to run git: fatal: 'develop' is already used by worktree at ...` 를 봤다면, **머지 자체는 성공해 있다.** 에러만 보고 재시도하지 말고 아래 확인으로 넘어간다.
 
@@ -134,7 +150,7 @@ git status --short                          # 비어 있어야 한다
 gh pr view <번호> --json state,mergedAt      # MERGED 여야 한다
 ```
 
-**`git log origin/develop` 로 내 커밋을 찾지 않는다.** squash 병합이라 내 커밋 SHA 는 develop 에 절대 나타나지 않는다 — 항상 "없음"이 나와 판정이 무의미하다. 커밋이 들어갔는지는 **PR 이 MERGED 인지로** 본다.
+**`git log origin/<base>` 로 내 커밋을 찾지 않는다.** squash 병합이라 내 커밋 SHA 는 base 브랜치에 절대 나타나지 않는다 — 항상 "없음"이 나와 판정이 무의미하다. 커밋이 들어갔는지는 **PR 이 MERGED 인지로** 본다.
 
 미커밋 변경이 남아 있거나 PR 이 MERGED 가 아니면 **지우지 않는다.** 사용자에게 확인을 구한다.
 
@@ -144,7 +160,7 @@ herdr worktree remove --workspace <ID> --force
 
 workspace 가 닫히면서 **이 세션도 함께 종료된다.** 그래서 반드시 마지막이다.
 
-**0단계는 승인을, 4단계는 재확인을 한다. 재확인 결과가 0단계와 같으면 되묻지 않고, 다르면 멈추고 묻는다.** 0단계 승인은 "이상 없음"에 대한 승인이지 무슨 일이 있어도 지우라는 위임이 아니다. 이 명령만은 **어느 allowlist 에도 넣지 않아** 권한 프롬프트가 마지막 안전장치로 한 번 표시된다 — `.claude/settings.json` 에도, `.claude/settings.local.json` 에도 없다.
+**0단계는 승인을, 4단계는 재확인을 한다. 재확인 결과가 0단계와 같으면 되묻지 않고, 다르면 멈추고 묻는다.** 0단계 승인은 "이상 없음"에 대한 승인이지 무슨 일이 있어도 지우라는 위임이 아니다. 이 명령은 **allowlist 에 넣지 않는다** — 되돌릴 수 없는 유일한 단계에 권한 프롬프트를 마지막 안전장치로 한 번 남긴다. 이미 허용해 둔 저장소라면 그 안전장치가 없으므로 4단계 재확인을 사람이 대신한다.
 
 
 ## 이 스킬을 개선하려면 — transcript 는 세션이 종료돼도 남는다
@@ -173,19 +189,19 @@ ls -t ~/.claude/projects/*"$REPO"-*<슬러그>-*/*.jsonl
 | `gh pr merge --delete-branch` 를 쓴다 | 어느 worktree 에서도 반드시 실패한다. 설정이 자동으로 지우므로 필요도 없다 |
 | 머지 뒤 `git push origin --delete` 를 이어 붙인다 | `deleteBranchOnMerge` 가 이미 지웠다. `remote ref does not exist` 가 발생한다 |
 | 그 에러를 보고 머지를 재시도한다 | 머지는 이미 됐다. `state` 와 `ls-remote` 종료코드로 확인부터 |
-| `--squash` 를 뺀다 | 이 저장소는 squash 만 허용한다 |
+| 저장소 설정을 확인하지 않고 `--squash` 를 쓴다 | squash 가 꺼진 저장소에서 머지가 거부된다. 0단계의 `squashMergeAllowed` 로 정한다 |
 | `ls-remote \| wc -l` 로 삭제를 판정한다 | 네트워크·원격 오류도 0 줄이다. `--exit-code` 의 종료코드를 본다 |
 | 상태만 바꾸고 코멘트를 남기지 않는다 | 다음 사람이 PR 을 열어야만 맥락을 안다 |
 | `herdr agent stop` 을 호출한다 | 없는 명령이다. `herdr pane close` |
 | `agent list` 결과를 거르지 않고 닫는다 | 다른 사람 세션이 함께 나온다. 남의 작업을 종료시킨다 |
 | `--workspace` ID 를 짐작한다 | 목록에 메인 체크아웃이 섞여 있다. `--force` 가 그것을 유실시킨다 |
-| `git log origin/develop` 로 내 커밋을 찾는다 | squash 라 SHA 가 남지 않는다. PR 의 `MERGED` 로 본다 |
+| `git log origin/<base>` 로 내 커밋을 찾는다 | squash 라 SHA 가 남지 않는다. PR 의 `MERGED` 로 본다 |
 | worktree 를 먼저 지운다 | 세션이 종료돼 나머지 단계를 수행하지 못한다 |
 | 0단계를 건너뛰고 바로 머지한다 | 물을 기회는 그때뿐이다. 4단계가 세션을 끝낸다 |
 | 이상이 없는데 1~4단계 중간에 확인을 구한다 | 승인은 0단계에서 받았다. 정상 경로의 중간 질문은 중복이다 |
 | 4단계 재확인에서 이상이 나왔는데 그대로 진행한다 | 0단계 승인은 "이상 없음"에 대한 승인이다. 달라졌으면 멈춘다 |
 | `mergeable: UNKNOWN` 을 머지 불가로 읽는다 | 갓 push 한 PR 과 이미 머지된 PR 이 둘 다 그렇다. `state` 로 먼저 가른다 |
-| CI·리뷰 상태를 0단계에서 조회한다 | 이 저장소에서는 항상 빈다. 죽은 점검이다 |
+| CI 실패를 확인하지 않고 머지한다 | 1단계는 되돌릴 수 없다. 0단계에서 `statusCheckRollup` 을 본다 |
 | 0단계의 `gh pr view` 에 번호를 넣는다 | 번호를 알아야 실행되니 "PR 이 있나"를 묻지 못한다 |
 
 ## 이 문서의 근거

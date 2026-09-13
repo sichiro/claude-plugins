@@ -42,7 +42,7 @@ GitHub Issues 저장소는 `{ "base": "main", "tracker": { "type": "github" } }`
 ## 절차
 
 1. `test "${HERDR_ENV:-}" = 1` — 실패하면 herdr 밖이라고 알리고 중단한다
-2. **`tracker` 가 있으면** 이슈 식별자로 직접 조회해 유형·요약과 **현재 상태**를 얻는다 — 명령은 references 의 「조회」 행이다. 상태는 8단계가 쓴다. `tracker` 가 없으면 이 단계를 생략한다
+2. **`tracker` 가 있으면** 이슈 식별자로 직접 조회해 요약과 **현재 상태**를 얻는다 — 명령은 references 의 「조회」 행이다. 상태는 8단계가 쓴다. 유형은 트래커에 따라 없을 수 있다 — 3단계의 종류는 변경 성격으로 정하므로 없어도 된다. `tracker` 가 없으면 이 단계를 생략한다
 3. 브랜치명을 `<종류>/<슬러그>-<영문 주제어>` 로 짓는다. **종류는 이슈 유형이 아니라 변경 성격으로 정한다** — 값은 `branchKinds` 에서 고른다. 유형이 「작업」이어도 결함 수정이면 `fix/` 로 간다.
 
    슬러그는 트래커로 가른다.
@@ -52,6 +52,9 @@ GitHub Issues 저장소는 `{ "base": "main", "tracker": { "type": "github" } }`
    | Jira | 이슈키에서 `-` 를 떼고 소문자로 | `MGR-135` → `mgr135` |
    | GitHub | 이슈 번호 그대로 | `135` → `135` |
    | 없음 | 첫 토큰을 소문자로 | `ABC-9` → `abc-9` |
+
+   **에이전트 이름은 슬러그에서 짓되, 숫자로 시작하면 앞에 `i` 를 붙인다** — `135` 는 `i135` 다. `herdr` 의 이름 규칙이 `[a-z][a-z0-9_-]{0,31}` 라 숫자로 시작하는 이름을 거부한다.
+
    **주제어는 티켓을 열지 않고도 무슨 일인지 알 만큼 적는다** — 라벨이 이 값을 그대로 쓴다
 4. worktree 를 만든다:
 
@@ -64,12 +67,12 @@ GitHub Issues 저장소는 `{ "base": "main", "tracker": { "type": "github" } }`
 
    **`--base` 를 생략하지 않는다.** 생략하면 `--cwd` 체크아웃의 현재 HEAD 를 따라가고, 그게 base 브랜치가 아닌 순간 조용히 다른 곳에서 갈라진다. 설정이 없으면 `develop` 을 쓴다.
 5. 응답 JSON 에서 workspace ID · root pane ID · worktree 경로를 파싱한다. **예측하지 않는다**
-6. 그 pane 에 에이전트를 띄운다 — `herdr agent start <이슈키 소문자> --kind <종류> --pane <root pane id>`
+6. 그 pane 에 에이전트를 띄운다 — `herdr agent start <에이전트 이름> --kind <종류> --pane <root pane id>`
 
    **종류가 `codex` 면 `-- --yolo` 를 덧붙인다.**
 
    ```bash
-   herdr agent start <이슈키 소문자> --kind codex --pane <root pane id> -- --yolo
+   herdr agent start <에이전트 이름> --kind codex --pane <root pane id> -- --yolo
    ```
 
    codex 의 기본 샌드박스 `workspace-write` 는 **worktree 밖 쓰기를 막는다.** 이 명령이 만드는 것은 링크드 worktree 라 git 디렉터리가 worktree 밖에 있고(근거: `git rev-parse --git-common-dir`) 커밋·브랜치 조작이 전부 그 바깥이라, 샌드박스를 켠 채로는 `git tag` 조차 `Operation not permitted` 다.
@@ -81,13 +84,13 @@ GitHub Issues 저장소는 `{ "base": "main", "tracker": { "type": "github" } }`
    **기본이 `--yolo` 인 것은 그렇게 정했기 때문이다** — `--yolo` 는 `~/.ssh`·메인 체크아웃·**같은 저장소의 다른 worktree 전부**를 열고 `--add-dir` 은 git 디렉터리 하나만 여니, 범위를 좁히려면 이 인자로 바꾼다. 다른 worktree 가 열린다는 것은 같은 저장소에서 병행 중인 옆 세션의 미커밋 변경에까지 닿는다는 뜻이다.
 
    `--yolo` 는 `--dangerously-bypass-approvals-and-sandbox` 의 별칭이다. **`codex --help` 에는 나오지 않으니** 없는 플래그로 오해하지 않는다. herdr 은 `--` 뒤 인자를 그대로 argv 에 넘긴다 (2026-09-11 실측 — 응답의 `argv` 가 `["codex","--yolo"]` 였고 화면에 `permissions: YOLO mode` 가 떴다).
-7. 인자에 `옮겨줘` 가 있으면 `herdr agent focus <이슈키 소문자>`
+7. 인자에 `옮겨줘` 가 있으면 `herdr agent focus <에이전트 이름>`
 8. **`tracker.transitions.inProgress` 가 있을 때만** 이슈를 진행 중으로 옮긴다 — 명령은 references 의 「진행 중 전환」 행이다. GitHub Issues 에는 그 상태가 없으므로 이 단계가 통째로 없다
 
    **2번에서 조회한 상태가 완료면 전환하지 않는다.** 재오픈은 사용자가 판단할 일이니 건너뛰고 그 사실을 보고에 적는다 — 근거는 references 의 Jira 절에 있다.
 
    전환이 실패해도 **마지막 보고 단계는 한다.** worktree 와 에이전트는 이미 준비돼 있으니, 상태를 못 옮겼다는 사실만 함께 알린다
-9. workspace ID · worktree 경로 · 브랜치명 · 에이전트 이름을 보고한다. **codex 로 띄웠으면 그 세션에 훅도 저장소 지침도 걸리지 않는다는 사실을 함께 알린다** — 지켜야 할 주체가 사용자다
+9. workspace ID · worktree 경로 · 브랜치명 · 에이전트 이름을 보고한다. **codex 로 띄웠으면 그 세션에 훅도 저장소 지침도 걸리지 않는다는 사실을 함께 알린다** — 지켜야 할 주체가 사용자다. `tracker` 가 없어 트래커 단계를 생략했으면 그 사실도 보고한다 — 설정 누락과 의도적 무트래커를 사용자가 구분한다
 
 ## 걸리는 지점
 
