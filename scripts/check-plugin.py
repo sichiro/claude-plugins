@@ -20,11 +20,16 @@ def load_json(path, label):
 
 market = load_json(ROOT / ".claude-plugin/marketplace.json", "marketplace.json") or {}
 for entry in market.get("plugins", []):
-    src = ROOT / entry["source"]
-    if not src.is_dir():
-        errors.append(f"marketplace.json: source 가 없다 — {entry['source']}")
+    name = entry.get("name", "<이름 없음>")
+    source = entry.get("source")
+    if not source:
+        errors.append(f"marketplace.json: {name} 항목에 source 가 없다")
         continue
-    load_json(src / ".claude-plugin/plugin.json", f"{entry['name']}/plugin.json")
+    src = ROOT / source
+    if not src.is_dir():
+        errors.append(f"marketplace.json: source 가 없다 — {source}")
+        continue
+    load_json(src / ".claude-plugin/plugin.json", f"{name}/plugin.json")
 
 # 2. 설치처에 없는 저장소 경로를 참조하지 않는다
 STALE = re.compile(r"`\.claude/(rules|commands|skills)/")
