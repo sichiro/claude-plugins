@@ -2,6 +2,22 @@
 
 `wt` 와 `wt-done` 이 함께 읽는다.
 
+## `.claude/wt.json`
+
+```json
+{
+  "base": "develop",
+  "branchKinds": ["feature", "fix", "docs", "chore"],
+  "tracker": {
+    "type": "jira",
+    "project": "MGR",
+    "transitions": { "inProgress": "31", "done": "41" }
+  }
+}
+```
+
+GitHub Issues 저장소는 `{ "base": "main", "tracker": { "type": "github" } }` 로 끝난다. `transitions` 는 Jira 에만 필요하다. 파일이 없으면 `base` 는 `develop`, `branchKinds` 는 위 네 값이 기본이다.
+
 저장소가 어느 트래커를 쓰는지는 `.claude/wt.json` 의 `tracker.type` **만으로** 판정한다. remote 주소로 추정하지 않는다 — Jira 를 쓰면서 GitHub remote 를 가진 저장소가 실재한다.
 
 **`tracker` 가 없으면 아래 연산을 전부 생략하고** worktree 와 에이전트만 준비한다.
@@ -15,7 +31,8 @@
 
 ## Jira
 
-- **JQL 로 찾지 않는다.** 이 사이트의 JQL 은 한글 값에 0건을 반환한다. 이슈 키로 직접 조회한다
+- **JQL 로 찾지 않는다.** 이슈 키를 이미 알고 있으니 직접 조회한다. JQL 은 사이트에 따라 비ASCII 값에 0건을 반환한다
+- **완료 여부는 상태 이름이 아니라 `statusCategory` 가 `done` 인지로 본다.** 상태 이름은 워크플로마다 다르다
 - **상태를 이름으로 지정할 자리가 없다.** 전환 id 로만 지정하고, 그 값은 `wt.json` 의 `tracker.transitions` 에서 읽는다. 실패하면 `getTransitionsForJiraIssue` 로 다시 얻는다
 - **완료 이슈에 진행 중 전환을 걸지 않는다.** 그 전환은 `isGlobal` 이라 완료 이슈에도 그대로 걸려 **조용히 재오픈시킨다.** 게다가 `hasScreen: false` 라 `resolution` 을 비울 화면이 없어, 상태만 진행 중이고 `resolution` 은 완료로 남는다. 조회한 상태로 먼저 가른다
 - **MCP 도구 이름은 설치마다 접두사가 다르다.** `getJiraIssue` 라는 이름으로 찾고, 접두사를 문서에 박지 않는다
