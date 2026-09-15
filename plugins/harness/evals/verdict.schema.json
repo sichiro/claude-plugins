@@ -1,0 +1,11 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "status": {"type": "string", "enum": ["PASS", "FAIL", "UNMEASURED", "ERROR"]},
+    "evidence": {"type": "array", "items": {"type": "string"}},
+    "coverage": {"type": "string", "enum": ["complete", "incomplete"]},
+    "summary": {"type": "string"}
+  },
+  "required": ["status", "evidence", "coverage", "summary"]
+}
