@@ -1,0 +1,8 @@
+{
+  "name": "harness",
+  "description": "자기 개선 하네스 — 세션 원장 수집, 관찰·제안 에이전트, eval 비교, PR 게이트. 프로젝트 데이터는 .claude/harness/ 한 디렉터리에 둔다",
+  "version": "0.1.0",
+  "author": {
+    "name": "junghosuh"
+  }
+}

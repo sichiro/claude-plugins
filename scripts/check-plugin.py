@@ -34,9 +34,10 @@ for entry in market.get("plugins", []):
     load_json(src / ".claude-plugin/plugin.json", f"{name}/plugin.json")
 
 # 2. 설치처에 없는 저장소 경로를 참조하지 않는다
-STALE = re.compile(r"`\.claude/(rules|commands|skills)/")
+# rules 는 검사하지 않는다 — 적용 저장소의 .claude/rules 를 가리키는 것은 정당하다 (harness 플러그인)
+STALE = re.compile(r"`\.claude/(commands|skills)/")
 # 3. ${CLAUDE_PLUGIN_ROOT} 로 가리킨 경로가 실재한다
-PLUGIN_REF = re.compile(r"\$\{CLAUDE_PLUGIN_ROOT\}/([^\s`)]+)")
+PLUGIN_REF = re.compile(r"\$\{CLAUDE_PLUGIN_ROOT\}/([^\s`)\"]+)")
 
 for doc in (ROOT / "plugins").rglob("*.md"):
     text = doc.read_text()

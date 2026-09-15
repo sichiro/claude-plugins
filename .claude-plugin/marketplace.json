@@ -12,6 +12,12 @@
       "description": "herdr worktree 로 이슈 하나를 준비하고(wt) 마감한다(wt-done). 이슈 트래커·머지 정책 같은 저장소별 지침은 .claude/wt.md 에서 읽는다",
       "source": "./plugins/herdr-wt",
       "category": "productivity"
+    },
+    {
+      "name": "harness",
+      "description": "자기 개선 하네스 루프 — 원장 → 관찰(OBS) → 제안(IMP) → eval 비교 → 보고서 → PR 게이트. 프로젝트 데이터는 .claude/harness/ 하나다",
+      "source": "./plugins/harness",
+      "category": "productivity"
     }
   ]
 }
