@@ -7,6 +7,7 @@ fail() { echo "FAIL test-gate: $1"; exit 1; }
 R="$T/repo"; mkdir -p "$R/.claude/rules" "$R/.claude/harness/cases/a" "$R/src"
 git -C "$R" init -q -b develop; echo a > "$R/src/a.go"; echo p > "$R/.claude/harness/cases/a/prompt.md"
 printf 's1\t0000\n' > "$R/.claude/harness/sealed.manifest"
+echo n > "$R/.claude/harness/cases/README.md"
 git -C "$R" add -A; git -C "$R" commit -q -m init
 BASE=$(git -C "$R" rev-parse HEAD)
 git -C "$R" checkout -q -b harness/x
@@ -43,14 +44,22 @@ OUT=$(inp "gh pr create --base develop" | sh "$G"); printf '%s' "$OUT" | grep -q
 # --base=<x> · -B <x> · --base 없음(기본 브랜치를 gh 에 묻는다)도 같은 판정
 OUT=$(inp "gh pr create --base=develop" | sh "$G"); printf '%s' "$OUT" | grep -q '"deny"' || fail "--base= 형태를 놓침"
 OUT=$(inp "gh pr create -B develop" | sh "$G"); printf '%s' "$OUT" | grep -q '"deny"' || fail "-B 형태를 놓침"
+# 본문 문자열 안의 --base 는 플래그가 아니다 — 진짜 플래그(main, 이 저장소에 없는 브랜치)를 골라야 한다
+CMDB='gh pr create --body "rebase onto --base develop first" --base main'
+OUT=$(printf '{"tool_name":"Bash","cwd":"%s","tool_input":{"command":%s}}' "$R" "$(printf '%s' "$CMDB" | jq -Rs .)" | sh "$G"); printf '%s' "$OUT" | grep -q 'base 브랜치를 찾지 못했다: main' || fail "따옴표 안 --base 를 플래그로 읽음: $OUT"
+# 반복 플래그는 마지막이 이긴다 (gh 와 같다)
+OUT=$(inp "gh pr create --base develop --base main" | sh "$G"); printf '%s' "$OUT" | grep -q 'base 브랜치를 찾지 못했다: main' || fail "반복 --base 에서 마지막을 고르지 않음: $OUT"
 OUT=$(inp "gh pr create --title t" | PATH="$T/bin:$PATH" sh "$G"); printf '%s' "$OUT" | grep -q '"deny"' || fail "--base 없는 create 를 놓침"
 OUT=$(inp "gh pr create --title t" | STUB_DEFAULT=nonexistent PATH="$T/bin:$PATH" sh "$G"); printf '%s' "$OUT" | grep -q 'base 브랜치를 찾지 못했다' || fail "없는 기본 브랜치를 통과시킴: $OUT"
+OUT=$(inp "gh pr create --title t" | STUB_DEFAULT= PATH="$T/bin:$PATH" sh "$G"); printf '%s' "$OUT" | grep -q '빈 값을 냈다' || fail "빈 기본 브랜치를 사유 없이 막음: $OUT"
 # 유효한 보고서 커밋 → 통과 (보고서 커밋으로 HEAD 가 바뀌어도 하네스 트리가 같다). managed=false 도 유효하다 — 보호 계층은 범위 밖
 EV=$(git -C "$R" rev-parse HEAD)
 report "$EV" '[]' '[]' false '["a","s1"]' > "$R/.claude/harness/reports/$EV.json"
 git -C "$R" add -A; git -C "$R" commit -q -m report
 OUT=$(inp "gh pr create --base develop" | sh "$G"); [ -z "$OUT" ] || fail "유효한 보고서인데 deny: $OUT"
 OUT=$(inp "gh pr create --title t" | PATH="$T/bin:$PATH" sh "$G"); [ -z "$OUT" ] || fail "--base 없는 create 가 유효한 보고서인데 deny: $OUT"
+OUT=$(inp "gh pr create --base=develop" | sh "$G"); [ -z "$OUT" ] || fail "--base= 형태가 유효한 보고서인데 deny: $OUT"
+OUT=$(inp "gh pr create -B develop" | sh "$G"); [ -z "$OUT" ] || fail "-B 형태가 유효한 보고서인데 deny: $OUT"
 # cwd 가 하위 디렉터리여도 같은 판정
 OUT=$(printf '{"tool_name":"Bash","cwd":"%s/src","tool_input":{"command":"gh pr create --base develop"}}' "$R" | sh "$G"); [ -z "$OUT" ] || fail "하위 cwd 에서 deny: $OUT"
 # 경로 접두·--squash 가 붙은 merge 도 대상이다 (gh 스텁이 현재 PR 의 head/base 를 준다)

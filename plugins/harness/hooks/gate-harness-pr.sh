@@ -46,16 +46,19 @@ else
   printf '%s' "$CMD" | grep -qE -- '(^|[[:space:]])(--head|-H)([[:space:]=]|$)' && deny "--head 형태는 지원하지 않는다 — 대상 브랜치를 체크아웃하고 실행한다"
   TARGET=$($G rev-parse --verify -q HEAD) || deny "HEAD 를 읽지 못했다"
   # --verify -q 가 아니면 없는 ref 이름이 stdout 에 그대로 찍혀 BASE 가 두 줄이 된다
-  # base 는 명령의 --base <x> · --base=<x> · -B <x>, 없으면 저장소의 기본 브랜치 — PR 이 실제로 가는 곳이다
-  BASE_NAME=$(printf '%s' "$CMD" | grep -oE -- '(^|[[:space:]])(--base|-B)[[:space:]=][^[:space:]]+' | head -1 | sed -E 's/^[[:space:]]*(--base|-B)[[:space:]=]//')
+  # base 는 명령의 --base <x> · --base=<x> · -B <x>, 없으면 저장소의 기본 브랜치 — PR 이 실제로 가는 곳이다.
+  # heredoc 본문을 벗긴 STRIPPED 에서 따옴표 안 문자열까지 지운 뒤 마지막 것을 고른다 — 본문(--body "…")의 언급이 플래그를 이기지 않고, 반복 플래그는 gh 처럼 마지막이 이긴다.
+  # ponytail: 따옴표는 한 줄 안에서 짝이 맞는 것만 벗긴다. 줄을 넘는 따옴표·중첩 따옴표는 남아 과차단 방향으로 틀린다.
+  BASE_NAME=$(printf '%s\n' "$STRIPPED" | sed -E 's/"[^"]*"//g' | sed -E "s/'[^']*'//g" | grep -oE -- '(^|[[:space:]])(--base|-B)[[:space:]=][^[:space:]]+' | tail -1 | sed -E 's/^[[:space:]]*(--base|-B)[[:space:]=]//')
   [ -n "$BASE_NAME" ] || BASE_NAME=$(cd "$ROOT" && gh repo view --json defaultBranchRef -q .defaultBranchRef.name 2>/dev/null) || deny "기본 브랜치를 조회하지 못했다: gh repo view"
+  [ -n "$BASE_NAME" ] || deny "기본 브랜치를 조회하지 못했다: gh repo view 가 빈 값을 냈다"
   BASE=$($G rev-parse --verify -q "origin/$BASE_NAME" || $G rev-parse --verify -q "$BASE_NAME") || deny "base 브랜치를 찾지 못했다: $BASE_NAME"
 fi
 
 $G diff --quiet "$BASE" "$TARGET" -- .claude CLAUDE.md ':!.claude/harness/observations' ':!.claude/harness/proposals' ':!.claude/harness/reports' 2>/dev/null && exit 0
 
 SUITE=$($G rev-parse --verify -q "$TARGET:.claude/harness/cases" 2>/dev/null || echo none)
-WANT=$( { $G ls-tree --name-only "$TARGET" .claude/harness/cases/ 2>/dev/null | while read -r p; do basename "$p"; done
+WANT=$( { $G ls-tree -d --name-only "$TARGET" .claude/harness/cases/ 2>/dev/null | while read -r p; do basename "$p"; done
           $G show "$TARGET:.claude/harness/sealed.manifest" 2>/dev/null | cut -f1; } | grep . | sort -u)
 FILES=$($G ls-tree --name-only "$TARGET" .claude/harness/reports/ 2>/dev/null | grep '\.json$' || true)
 [ -n "$FILES" ] || deny "하네스가 바뀌었는데 eval 보고서가 없다 — /harness:propose 의 절차(run.sh · report.sh)로 보고서를 만들어 .claude/harness/reports/ 에 커밋한다"
@@ -69,7 +72,7 @@ for f in $FILES; do
   $G diff --quiet "$EV" "$TARGET" -- .claude CLAUDE.md ':!.claude/harness/observations' ':!.claude/harness/proposals' ':!.claude/harness/reports' 2>/dev/null || { REASON="$f: evaluated_sha 이후 하네스가 바뀌었다 — 다시 평가한다"; continue; }
   [ "$(printf '%s' "$J" | jq -r '.suite_sha // ""')" = "$SUITE" ] || { REASON="$f: suite_sha 가 대상의 harness/cases 트리와 다르다"; continue; }
   HAVE=$(printf '%s' "$J" | jq -r '.cases[].case' | sort -u)
-  [ "$HAVE" = "$WANT" ] || { REASON="$f: 보고서의 사례 목록이 suite(discovery + sealed.manifest)와 다르다"; continue; }
+  [ "$HAVE" = "$WANT" ] || { REASON="$f: 보고서의 사례 목록이 suite(cases + sealed.manifest)와 다르다"; continue; }
   [ "$(printf '%s' "$J" | jq -r '.regressed|length')" = 0 ] || { REASON="$f: 회귀 $(printf '%s' "$J" | jq -r '.regressed|length') 건 — 승격 불가"; continue; }
   [ "$(printf '%s' "$J" | jq -r '.errors|length')" = 0 ] || { REASON="$f: 러너 오류 $(printf '%s' "$J" | jq -r '.errors|length') 건 — 승격 불가"; continue; }
   exit 0
