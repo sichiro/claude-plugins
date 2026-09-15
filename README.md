@@ -1,6 +1,6 @@
 # sichiro — Claude Code 플러그인 마켓플레이스
 
-개인 Claude Code 플러그인 모음이다. 지금은 `herdr-wt` 하나를 담는다.
+개인 Claude Code 플러그인 모음이다. `herdr-wt` 와 `harness` 둘을 담는다.
 
 ## 설치
 
@@ -9,6 +9,7 @@ Claude Code 안에서 두 명령을 차례로 실행한다.
 ```
 /plugin marketplace add sichiro/claude-plugins
 /plugin install herdr-wt@sichiro
+/plugin install harness@sichiro
 ```
 
 ## herdr-wt
@@ -38,10 +39,18 @@ cp plugins/herdr-wt/examples/wt.md <저장소>/.claude/wt.md
 
 지침은 단계를 더하거나 값을 정할 뿐, 단계의 순서와 승인·재확인 지점은 바꾸지 못한다. 파일이 없으면 base 는 `develop`, 이슈 트래커는 없는 것으로 진행한다.
 
+## harness
+
+자기 개선 하네스 엔진이다. 세션 원장을 모으고(`hooks/collect.sh`), 반복 실패를 관찰해 OBS 로 쓰고(`/harness:observe`), 변경 하나를 제안해 eval 로 기준선과 비교하고(`/harness:propose`), 보고서 없는 하네스 PR 을 막는다(`gh pr create` 게이트). 프로젝트에 남는 것은 `.claude/harness/` 한 디렉터리다. 준비 절차와 게이트 조건은 `plugins/harness/README.md` 에 있다.
+
+이 저장소 자신이 첫 적용 대상이다 — `.claude/harness/cases/` 에 사례가 있고 검증 동사는 `make check` 다.
+
 ## 검사
 
 매니페스트와 문서 참조를 검사한다. 통과하면 `통과` 를 출력하고 종료코드 0 을 반환한다.
 
 ```
-python3 scripts/check-plugin.py
+make check
 ```
+
+`check` 는 `python3 scripts/check-plugin.py`(매니페스트 · 문서 참조)와 `sh plugins/harness/test.sh`(harness 엔진 테스트)를 차례로 실행한다.
