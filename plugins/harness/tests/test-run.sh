@@ -67,4 +67,7 @@ cp "$T/manifest" "$P/.claude/harness/sealed.manifest"; git -C "$P" add -A; git -
 run --harness "$SHA" --out "$T/out8" --dry-run --sealed "$T/sealed" || fail "manifest 일치인데 exit $?"
 [ "$(wc -l < "$T/out8/results.jsonl" | tr -d ' ')" = $((N+1)) ] || fail "봉인 사례가 results 에 더해지지 않음"
 [ "$(jq -r .sealed_digest "$T/out8/meta.json")" != none ] || fail "sealed digest 가 none"
+# timeout 없이도 dry-run 은 돈다 — timeout 은 실제 claude 호출 경로에서만 요구한다
+B="$T/bin"; mkdir -p "$B"; for c in jq git shasum make; do ln -s "$(command -v "$c")" "$B/$c"; done
+( PATH="$B:/usr/bin:/bin"; run --harness "$SHA" --out "$T/out9" --dry-run >/dev/null ) || fail "timeout 없는 PATH 에서 dry-run 실패"
 echo "PASS test-run"

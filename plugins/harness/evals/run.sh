@@ -3,6 +3,7 @@
 #   run.sh --harness <sha> --out <dir> [--sealed <dir>] [--dry-run] [--repeat N]
 #   run.sh --materialize <case dir> <work dir> --harness <sha>      (테스트용)
 #   run.sh --sealed-manifest <dir>                                  (봉인 묶음 manifest 를 stdout 에)
+# 필요 도구: jq · git · shasum. 실제 모델 평가 경로에서만 claude 와 timeout(GNU coreutils — gtimeout 도 본다)을 더 요구한다.
 # 평가 대상의 cwd 에는 하네스(.claude · CLAUDE.md — .claude/harness 제외, settings.json 의 enabledPlugins 제거)와 fixture 만 있다. 정답·grader 는 없다.
 # 저장소 루트는 CLAUDE_PROJECT_DIR, 없으면 cwd 의 git toplevel 이다. 평가기는 플러그인(이 스크립트의 디렉터리)에 있다.
 # --repeat N: 사례마다 N 회 돌린다. results.jsonl 의 줄에 run(1..N) 이 붙고 N>1 이면 파일명에 .r<i> 가 붙는다.
@@ -25,7 +26,7 @@ while [ $# -gt 0 ]; do
     *) echo "unknown arg: $1" >&2; exit 2;;
   esac
 done
-for c in jq git timeout shasum; do command -v "$c" >/dev/null 2>&1 || { echo "$c 가 없다" >&2; exit 2; }; done
+for c in jq git shasum; do command -v "$c" >/dev/null 2>&1 || { echo "$c 가 없다" >&2; exit 2; }; done
 REPEAT=$(printf '%s' "$REPEAT" | sed 's/^0*//'); [ -n "$REPEAT" ] || REPEAT=0   # 앞의 0 을 지운다 — 산술 $((…)) 은 08 을 8진수로 읽어 실패한다
 case "$REPEAT" in *[!0-9]*|0) echo "--repeat 는 1 이상의 정수다: ${REPEAT_RAW:-$REPEAT}" >&2; exit 2;; esac
 
@@ -40,14 +41,18 @@ if [ -n "$MANIFEST_DIR" ]; then sealed_manifest "$MANIFEST_DIR"; exit 0; fi
 
 [ -n "$SHA" ] || { echo "--harness <sha> 가 필요하다" >&2; exit 2; }
 git -C "$ROOT" rev-parse --verify -q "$SHA^{commit}" >/dev/null || { echo "하네스 커밋이 아니다: $SHA" >&2; exit 2; }
-[ "$DRY" = 1 ] || [ -n "$MAT_CASE" ] || command -v claude >/dev/null 2>&1 || { echo "claude 가 없다" >&2; exit 2; }
+if [ "$DRY" != 1 ] && [ -z "$MAT_CASE" ]; then
+  command -v claude >/dev/null 2>&1 || { echo "claude 가 없다" >&2; exit 2; }
+  # timeout 은 실제 claude 호출에만 쓴다 — dry-run · materialize 는 없어도 돈다 (macOS 기본 설치에 없다)
+  TIMEOUT=$(command -v timeout || command -v gtimeout) || { echo "timeout(coreutils) 이 없다 — brew install coreutils" >&2; exit 2; }
+fi
 
 materialize() { # <case dir> <work dir>
   mkdir -p "$2"
-  TARF=$(mktemp)
   # git archive 는 없는 pathspec 에 실패한다 — 그 커밋에 실재하는 것만 넘긴다 (CLAUDE.md 없는 저장소가 있다)
   PATHS=$(git -C "$ROOT" ls-tree --name-only "$SHA" -- .claude CLAUDE.md)
   [ -n "$PATHS" ] || { echo "하네스 커밋에 .claude 도 CLAUDE.md 도 없다: $SHA" >&2; exit 2; }
+  TARF=$(mktemp)   # PATHS 검사 뒤에 만든다 — 앞에서 만들면 exit 2 가 임시 파일을 남긴다
   git -C "$ROOT" archive -o "$TARF" "$SHA" -- $PATHS   # 파이프가 아니라 파일로 — 실패가 rc 에 남는다
   tar -xf "$TARF" -C "$2"; rm -f "$TARF"
   rm -rf "$2/.claude/harness"
@@ -91,7 +96,7 @@ run_case() { # <case dir> <run index>
     cp "$1/dry-run.result.json" "$res" 2>/dev/null || : > "$res"
   else
     ( cd "$work" && EVAL_RECEIPTS="$rec" CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 \
-      timeout 300 claude -p "$(cat "$1/prompt.md")" \
+      "$TIMEOUT" 300 claude -p "$(cat "$1/prompt.md")" \
         --output-format json --json-schema "$SCHEMA" \
         --setting-sources project --settings "$E/settings.json" \
         --allowedTools Bash,Read,Grep --max-turns 15 --max-budget-usd 1 --no-session-persistence \

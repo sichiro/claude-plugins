@@ -9,13 +9,27 @@
 /plugin install harness@sichiro
 ```
 
+## 전제
+
+엔진은 아래 도구가 장비에 있다고 전제한다.
+
+- `jq` · `git` · `make` · `shasum` — 훅 · 게이트 · 러너가 모두 쓴다.
+- `gh` — 로그인 상태여야 한다. 게이트가 PR 과 기본 브랜치를 조회한다.
+- `claude` CLI — 사례를 실제로 평가할 때 쓴다.
+- `timeout`(GNU coreutils) — 실제 평가에서 사례 하나를 끊는다. macOS 는 `brew install coreutils` 로 넣고, `gtimeout` 이름도 인식한다. `--dry-run` 에는 필요 없다.
+
+이 저장소를 직접 개발할 때는 `python3` 를 더 쓴다 — `scripts/check-plugin.py` 가 그것으로 돈다.
+
 ## 저장소 준비
+
+설치 즉시 PR 게이트가 켜진다 — 사례와 보고서를 두기 전에는 `.claude/` · `CLAUDE.md` 를 건드린 모든 PR 이 막힌다. 그래서 준비 순서는 아래와 같다.
 
 1. `.claude/harness/cases/<사례>/` 를 만든다 — `prompt.md`(평가 대상에 줄 지시) · `expect.json`(`{"status":"PASS|FAIL|UNMEASURED","require_targets":["<make target>"]}`) · `fixture/`(가짜 저장소 — `Makefile` 의 recipe 가 `sh .harness-receipt.sh <target> <exit>` 를 부르고 canned 출력을 낸다) · `dry-run.result.json`(모델 없이 러너를 돌릴 때의 verdict).
 2. 검증 명령을 make target 으로 노출한다. 영수증은 make 안에서 불린 것만 실행 증거로 친다.
 3. `.claude/wt.md` 에 「base 는 `<브랜치>`」 를 적는다. 없으면 GitHub 기본 브랜치를 쓴다.
 4. `.gitignore` 에 `.claude/harness/runs/` 를 더한다. 원장은 장비 로컬이다.
 5. `.claude/settings.json` 의 `enabledPlugins` 에 `"harness@sichiro": true` 를 적는다(팀에 공유할 때). 개인 설치면 생략한다.
+6. 봉인 사례를 쓰려면 `~/.claude/harness-evals/<저장소명>/sealed/<사례>/` 에 1번과 같은 구조로 사례를 두고, 플러그인 캐시 경로의 `evals/run.sh --sealed-manifest ~/.claude/harness-evals/<저장소명>/sealed > .claude/harness/sealed.manifest` 로 manifest 를 만들어 커밋한다. 봉인 사례 자체는 저장소에 넣지 않는다.
 
 ## 루프
 
@@ -26,7 +40,7 @@
 - `/harness:observe` — 원장에서 반복 실패를 뽑아 `.claude/harness/observations/OBS-*.yaml` 로 쓴다.
 - `/harness:propose <OBS id>` — 변경 하나를 브랜치로 만들고 `.claude/harness/proposals/IMP-*.yaml` 을 쓴 뒤 기준선과 비교해 `.claude/harness/reports/<sha>.json` 을 만든다.
 - `/harness:ablate <파일>` — 파일 하나를 뺀 후보를 3회 반복 비교해 `removable` · `keep` 을 판정한다.
-- 수치는 `sh "${CLAUDE_PLUGIN_ROOT}/scripts/metrics.sh"` 로 본다. 인자 없이 `.claude/harness/runs` · `.claude/rules` 를 읽는다.
+- 수치는 플러그인 캐시 경로의 `scripts/metrics.sh` 로 본다(예. `sh ~/.claude/plugins/cache/sichiro/harness/<버전>/scripts/metrics.sh`). 인자 없이 `.claude/harness/runs` · `.claude/rules` 를 읽는다.
 
 ## 게이트
 
