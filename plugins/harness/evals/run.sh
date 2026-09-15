@@ -9,6 +9,7 @@
 # meta.json 은 실행이 끝난 뒤 쓴다 — model(첫 실제 결과의 modelUsage 중 출력 토큰 최대 키)·claude_version 이 그때 정해진다.
 # ponytail: 비적대적 전제 — 대상 프로세스는 사용자 권한 그대로라 저장소 밖 파일을 읽을 수 있다 (계획서 Global Constraints).
 set -eu
+unset MAKELEVEL   # 러너를 make 아래에서 띄워도 평가 대상의 직접 receipt 호출이 실행 증거로 둔갑하지 않게 — via_make 는 fixture 의 make 만 준다
 E=$(cd "$(dirname "$0")" && pwd)
 ROOT=${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}
 SHA=""; OUT=""; SEALED=""; DRY=0; MAT_CASE=""; MAT_WORK=""; MANIFEST_DIR=""; REPEAT=1
