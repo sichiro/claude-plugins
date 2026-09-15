@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "herdr-wt",
-      "description": "herdr worktree 로 이슈 하나를 준비하고(wt) 마감한다(wt-done). 이슈 트래커는 Jira 와 GitHub Issues 를 지원하며 저장소별 설정 파일에서 읽는다",
+      "description": "herdr worktree 로 이슈 하나를 준비하고(wt) 마감한다(wt-done). 이슈 트래커·머지 정책 같은 저장소별 지침은 .claude/wt.md 에서 읽는다",
       "source": "./plugins/herdr-wt",
       "category": "productivity"
     }
