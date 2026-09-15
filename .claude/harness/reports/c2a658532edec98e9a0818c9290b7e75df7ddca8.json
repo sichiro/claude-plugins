@@ -1,0 +1,49 @@
+{
+  "evaluated_sha": "c2a658532edec98e9a0818c9290b7e75df7ddca8",
+  "base_sha": "7d1c719ce6d3bafb2b288ceab9977f6c439cf0d4",
+  "suite_sha": "e1a2b0d3618cc4d116a87eeb708566aa8393e102",
+  "sealed_digest": "none",
+  "model": "claude-opus-5[1m]",
+  "claude_version": {
+    "base": "2.1.272",
+    "candidate": "2.1.272"
+  },
+  "repeat": {
+    "base": 1,
+    "candidate": 1
+  },
+  "managed": false,
+  "generated_at": "2026-09-16T01:14:46+0900",
+  "cases": [
+    {
+      "case": "fail-one",
+      "base": "1/1",
+      "candidate": "1/1",
+      "base_rate": 1,
+      "cand_rate": 1
+    },
+    {
+      "case": "ok-all",
+      "base": "1/1",
+      "candidate": "1/1",
+      "base_rate": 1,
+      "cand_rate": 1
+    },
+    {
+      "case": "unmeasured-no-python",
+      "base": "0/1",
+      "candidate": "1/1",
+      "base_rate": 0,
+      "cand_rate": 1
+    }
+  ],
+  "errors": [],
+  "improved": [
+    "unmeasured-no-python"
+  ],
+  "regressed": [],
+  "unchanged": [
+    "fail-one",
+    "ok-all"
+  ]
+}
