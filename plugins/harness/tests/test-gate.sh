@@ -77,7 +77,8 @@ chk() { # <이름> <report json>
   printf '%s' "$2" > "$R/.claude/harness/reports/$EV.json"; git -C "$R" add -A; git -C "$R" commit -q -m "$1"
   EV=$(git -C "$R" rev-parse HEAD)
   OUT=$(inp "gh pr create --base develop" | sh "$G"); printf '%s' "$OUT" | grep -q '"deny"' || fail "$1 보고서를 통과시킴"
-  git -C "$R" rm -q --cached ".claude/harness/reports/"*.json; git -C "$R" commit -q -m "rm-$1"; EV=$(git -C "$R" rev-parse HEAD)
+  git -C "$R" rm -rq --cached .claude/harness/reports; git -C "$R" commit -q -m "rm-$1"; EV=$(git -C "$R" rev-parse HEAD)
+  [ -z "$(git -C "$R" ls-files .claude/harness/reports)" ] || fail "$1 보고서가 인덱스에서 정리되지 않음"
 }
 chk regressed "$(report "$EV" '["a"]' '[]' true '["a","s1"]')"
 chk errors "$(report "$EV" '[]' '["a"]' true '["a","s1"]')"
