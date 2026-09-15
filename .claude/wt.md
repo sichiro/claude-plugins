@@ -9,7 +9,7 @@
 
 - 이 저장소 `sichiro/claude-plugins` 의 이슈를 쓴다
 - 조회는 `gh issue view <번호>`. 착수 시 상태 전환은 없다 — 브랜치와 PR 이 그 신호다
-- 마감: `gh issue close <번호>` + `gh issue comment`. PR 본문에 `Closes #<번호>` 가 있으면 머지 시점에 이미 닫혀 있으니 `state` 를 먼저 본다
+- 마감: `gh issue close <번호>` + `gh issue comment`. PR 본문의 `Closes #<번호>` 는 **base 가 기본 브랜치일 때만** 머지 시점에 이슈를 닫는다 — `develop` 같은 다른 base 면 닫히지 않는다. 어느 쪽이든 `state` 를 먼저 보고, 열려 있으면 직접 닫는다
 
 ## 결과 코멘트에 담을 것
 

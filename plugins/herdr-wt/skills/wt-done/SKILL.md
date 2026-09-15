@@ -69,7 +69,7 @@ description: 이슈 작업이 끝나 정리할 때 사용한다. "정리해줘" 
 
 ## 4. worktree 제거 — 실행하면 이 세션이 끝난다
 
-`herdr worktree list` 에서 **`path` 가 지금 작업 중인 worktree 와 일치하는 행**의 workspace ID 만 쓴다. 목록에는 메인 체크아웃과 다른 사람의 worktree 가 함께 있고, 잘못 고른 `--force` 는 그것들을 유실시킨다. 예측하지 않는다.
+`herdr worktree list --cwd "$PWD"` 에서 **`path` 가 지금 작업 중인 worktree 와 일치하는 행**의 workspace ID 만 쓴다. `--cwd` 를 빼면 현재 디렉터리가 아니라 **포커스된 workspace** 의 저장소를 반환한다 — 다른 창이 포커스돼 있으면 이 저장소 행이 아예 없다. 목록에는 메인 체크아웃과 다른 사람의 worktree 가 함께 있고, 잘못 고른 `--force` 는 그것들을 유실시킨다. 예측하지 않는다.
 
 지우기 전에 재확인한다 — `git status` 가 비었는가, PR 이 `MERGED` 인가. **`git log origin/<base>` 로 내 커밋을 찾지 않는다** — squash 병합이면 내 SHA 는 base 에 절대 나타나지 않아 항상 "없음"이다. 커밋이 들어갔는지는 PR 의 `MERGED` 로 본다.
 
