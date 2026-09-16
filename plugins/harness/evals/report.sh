@@ -1,6 +1,7 @@
 #!/bin/sh
 # report.sh <base out dir> <cand out dir> <out json>
 # 사례마다 통과 비율(PASS 수 / ERROR 아닌 실행 수)을 기준선·후보로 비교한다. --repeat 1 이면 종전 판정과 같다.
+# ERROR 는 러너 귀책만이다(grade.sh) — 모델 귀책(날조·예산·턴·timeout)은 FAIL 이라 분모에 남는다.
 # 개선 = 후보 비율 > 기준선. 회귀 = 후보 비율 < 기준선. 불변 = 같음.
 # 유효 실행이 0(전부 ERROR)이거나 사례가 없으면(MISSING) errors 에 넣고 비율 판정에서 뺀다 — 게이트가 errors 를 따로 막는다.
 # MISSING 은 예외 — 기준선 비율이 0 보다 크면 regressed 에도 남긴다 (fail-closed: 후보에서 사라진 사례).

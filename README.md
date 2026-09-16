@@ -41,7 +41,7 @@ cp plugins/herdr-wt/examples/wt.md <저장소>/.claude/wt.md
 
 ## harness
 
-자기 개선 하네스 엔진이다. 세션 원장을 모으고(`hooks/collect.sh`), 반복 실패를 관찰해 OBS 로 쓰고(`/harness:observe`), 변경 하나를 제안해 eval 로 기준선과 비교하고(`/harness:propose`), 보고서 없는 하네스 PR 을 막는다(`gh pr create` 게이트). 프로젝트에 남는 것은 `.claude/harness/` 한 디렉터리다. 준비 절차와 게이트 조건은 `plugins/harness/README.md` 에 있다.
+자기 개선 하네스 엔진이다. 세션 원장을 모으고(`hooks/collect.sh`), 반복 실패를 관찰해 OBS 로 쓰고(`/harness:hn-observe`), 변경 하나를 제안해 eval 로 기준선과 비교하고(`/harness:hn-propose`), 보고서 없는 하네스 PR 을 막는다(`gh pr create` 게이트). `/harness:hn` 이 저장소의 하네스 상태를 진단하고 다음 할 일을 안내한다. 프로젝트에 남는 것은 `.claude/harness/` 한 디렉터리다. 게이트와 수집은 평가할 사례(`.claude/harness/cases/` 하위 디렉터리 또는 `sealed.manifest` 항목)가 있는 저장소에서만 켜진다. `--repo` · `cd` · `sh -c` 형태만 저장소와 무관하게 거부한다. 준비 절차와 게이트 조건은 `plugins/harness/README.md` 에 있다.
 
 이 저장소 자신이 첫 적용 대상이다 — `.claude/harness/cases/` 에 사례가 있고 검증 동사는 `make check` 다.
 

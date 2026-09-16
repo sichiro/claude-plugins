@@ -22,7 +22,7 @@
 
 ## 저장소 준비
 
-설치 즉시 PR 게이트가 켜진다 — 사례와 보고서를 두기 전에는 `.claude/` · `CLAUDE.md` 를 건드린 모든 PR 이 막힌다. 그래서 준비 순서는 아래와 같다.
+게이트와 원장 수집은 평가할 사례가 있는 저장소에서만 켜진다(opt-in) — `.claude/harness/cases/` 에 사례 디렉터리가 하나라도 있거나 `sealed.manifest` 에 항목이 있어야 한다. 원장(`runs/`)만 있거나 `cases/` 가 비어 있는 저장소는 대상이 아니다. 1번의 첫 사례를 만든 순간부터 `.claude/` · `CLAUDE.md` 를 건드린 PR 은 보고서를 요구한다. 준비 순서는 아래와 같다. 어디까지 됐는지 모르면 `/harness:hn` 이 진단한다.
 
 1. `.claude/harness/cases/<사례>/` 를 만든다 — `prompt.md`(평가 대상에 줄 지시) · `expect.json`(`{"status":"PASS|FAIL|UNMEASURED","require_targets":["<make target>"]}`) · `fixture/`(가짜 저장소 — `Makefile` 의 recipe 가 `sh .harness-receipt.sh <target> <exit>` 를 부르고 canned 출력을 낸다) · `dry-run.result.json`(모델 없이 러너를 돌릴 때의 verdict).
 2. 검증 명령을 make target 으로 노출한다. 영수증은 make 안에서 불린 것만 실행 증거로 친다.
@@ -34,17 +34,20 @@
 ## 루프
 
 ```
-세션 실행(훅이 원장 기록) → /harness:observe → OBS → /harness:propose OBS-… → 브랜치 + IMP → 기준선·후보 비교 → 보고서 → PR(게이트) → 사용자 머지
+세션 실행(훅이 원장 기록) → /harness:hn-observe → OBS → /harness:hn-propose OBS-… → 브랜치 + IMP → 기준선·후보 비교 → 보고서 → PR(게이트) → 사용자 머지
 ```
 
-- `/harness:observe` — 원장에서 반복 실패를 뽑아 `.claude/harness/observations/OBS-*.yaml` 로 쓴다.
-- `/harness:propose <OBS id>` — 변경 하나를 브랜치로 만들고 `.claude/harness/proposals/IMP-*.yaml` 을 쓴 뒤 기준선과 비교해 `.claude/harness/reports/<sha>.json` 을 만든다.
-- `/harness:ablate <파일>` — 파일 하나를 뺀 후보를 3회 반복 비교해 `removable` · `keep` 을 판정한다.
+- `/harness:hn` — 저장소의 하네스 상태(사례 · 원장 · OBS · IMP · 보고서)를 진단하고 다음 할 일 하나와 쓸 스킬을 안내한다. 어디서 시작할지 모르면 이것부터.
+- `/harness:hn-observe` — 원장에서 반복 실패를 뽑아 `.claude/harness/observations/OBS-*.yaml` 로 쓴다.
+- `/harness:hn-propose <OBS id>` — 변경 하나를 브랜치로 만들고 `.claude/harness/proposals/IMP-*.yaml` 을 쓴 뒤 기준선과 비교해 `.claude/harness/reports/<sha>.json` 을 만든다.
+- `/harness:hn-ablate <파일>` — 파일 하나를 뺀 후보를 3회 반복 비교해 `removable` · `keep` 을 판정한다.
 - 수치는 플러그인 캐시 경로의 `scripts/metrics.sh` 로 본다(예. `sh ~/.claude/plugins/cache/sichiro/harness/<버전>/scripts/metrics.sh`). 인자 없이 `.claude/harness/runs` · `.claude/rules` 를 읽는다.
 
 ## 게이트
 
-`gh pr create` · `gh pr merge` 에서 브랜치가 하네스(`.claude/` · `CLAUDE.md`, `.claude/harness/{observations,proposals,reports}` · `.claude/handoff/` 제외)를 건드렸으면 유효한 보고서를 요구한다. 유효 조건 — `base_sha` 가 PR base 와 같다 · `evaluated_sha` 이후 하네스 트리 변경 없음 · `suite_sha` 가 대상의 `.claude/harness/cases` 트리와 같다 · 사례 집합이 `cases/` ∪ `sealed.manifest` 와 같다 · `regressed` · `errors` 가 비었다. base 는 명령의 `--base`, 없으면 GitHub 기본 브랜치다. `--repo` · `--head` 형태는 거부한다.
+`gh pr create` · `gh pr merge` 에서 브랜치가 하네스(`.claude/` · `CLAUDE.md`, `.claude/harness/{observations,proposals,reports}` · `.claude/handoff/` 제외)를 건드렸으면 유효한 보고서를 요구한다. 유효 조건 — `base_sha` 가 PR base 와 같다 · `evaluated_sha` 이후 하네스 트리 변경 없음 · `suite_sha` 가 대상의 `.claude/harness/cases` 트리와 같다 · 사례 집합이 `cases/` ∪ `sealed.manifest` 와 같다 · `regressed` · `errors` 가 비었다 · `model` · `claude_version` 이 `dry-run` 이 아니다. base 는 명령의 `--base`, 없으면 GitHub 기본 브랜치다.
+
+대상은 평가할 사례가 있는 체크아웃(`cases/` 하위 디렉터리 또는 `sealed.manifest` 항목)뿐이고, PR 대상 커밋에 사례가 하나도 없으면 게이트가 성립하지 않는다. 예외가 셋 있다 — `--repo` 형태, `cd` · `pushd` 가 든 명령, `sh -c` 로 감싼 명령은 어느 체크아웃을 검사할지 알 수 없어 **저장소와 무관하게** 거부한다. 대상 체크아웃 안에서 직접 실행한다. `--head` 는 대상 체크아웃 안에서만 거부한다. merge 대상의 head 가 로컬에 없으면 `git fetch origin <sha>` 를 한 번 시도하고, 그래도 없으면 그 사유로 거부한다.
 
 ## 저장소별 값의 출처
 
@@ -70,10 +73,10 @@ managed settings 보호 계층(커밋 게이트 · deny 목록)은 이 버전에
 
 | 파일 | 역할 |
 |---|---|
-| `hooks/collect.sh` | 세션 이벤트 9종을 `.claude/harness/runs/<session>.jsonl` 에 남긴다. fail-open |
-| `hooks/gate-harness-pr.sh` | PR 게이트. fail-closed |
+| `hooks/collect.sh` | 세션 이벤트 9종을 `.claude/harness/runs/<session>.jsonl` 에 남긴다. 평가할 사례가 있는 저장소만. fail-open |
+| `hooks/gate-harness-pr.sh` | PR 게이트. 평가할 사례가 있는 저장소만. fail-closed |
 | `evals/run.sh` | 하네스 해시를 fixture 위에 materialize 하고 사례마다 `claude -p` 를 돌려 grade 한다 |
-| `evals/grade.sh` | 결과 · 영수증 · 기대값으로 PASS · FAIL · UNMEASURED · ERROR 를 판정한다 |
+| `evals/grade.sh` | 결과 · 영수증 · 기대값으로 PASS · FAIL · UNMEASURED · ERROR 를 판정한다. ERROR 는 러너 귀책만이다 — 예산 · 턴 · timeout 소진, 구조화 출력 누락, 증거 날조는 모델 귀책이라 FAIL 이다 |
 | `evals/report.sh` | 기준선 · 후보 두 실행을 사례별 비율로 비교한 보고서를 만든다 |
 | `evals/receipt.sh` | fixture 의 Makefile recipe 가 부르는 영수증 기록기 |
 | `scripts/metrics.sh` | 원장 → 세션 · 교정 · 도구 실패 · 규칙 로드 수 |
