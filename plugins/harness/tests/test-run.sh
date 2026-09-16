@@ -72,4 +72,9 @@ run --harness "$SHA" --out "$T/out8" --dry-run --sealed "$T/sealed" || fail "man
 # timeout 없이도 dry-run 은 돈다 — timeout 은 실제 claude 호출 경로에서만 요구한다
 B="$T/bin"; mkdir -p "$B"; for c in jq git shasum make; do ln -s "$(command -v "$c")" "$B/$c"; done
 ( PATH="$B:/usr/bin:/bin"; run --harness "$SHA" --out "$T/out9" --dry-run >/dev/null ) || fail "timeout 없는 PATH 에서 dry-run 실패"
+# timeout(exit 124)으로 끊긴 사례는 결과 파일이 비지 않고 error_timeout 결과가 남아 FAIL 로 판정된다 — 모델 귀책
+printf '#!/bin/sh\nexit 0\n' > "$B/claude"; printf '#!/bin/sh\nexit 124\n' > "$B/timeout"; chmod +x "$B/claude" "$B/timeout"
+( PATH="$B:/usr/bin:/bin"; run --harness "$SHA" --out "$T/out10" >/dev/null 2>&1 ) || fail "timeout 경로 exit $?"
+[ "$(jq -r '.subtype' "$T/out10/ok-all.result.json")" = error_timeout ] || fail "timeout 결과가 error_timeout 이 아님: $(cat "$T/out10/ok-all.result.json")"
+jq -e 'select(.case=="ok-all" and .verdict=="FAIL")' "$T/out10/results.jsonl" >/dev/null || fail "timeout 이 FAIL 로 판정되지 않음: $(cat "$T/out10/results.jsonl")"
 echo "PASS test-run"

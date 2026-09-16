@@ -16,13 +16,19 @@ OUT=$(sh "$E/grade.sh" "$C" "$T/r.json" "$T/rec.jsonl"); printf '%s' "$OUT" | jq
 rec 2 true;    res UNMEASURED '[]';       [ "$(v "$C")" = UNMEASURED ] || fail "영수증 없음 → UNMEASURED 아님"
 rec 2 false r1; res UNMEASURED '["r1"]';  [ "$(v "$C")" = UNMEASURED ] || fail "make 밖 영수증 → UNMEASURED 아님"
 rec 2 true r1; res UNMEASURED '[]';       [ "$(v "$C")" = FAIL ] || fail "증거 없는 판정 → FAIL 아님"
-rec 2 true r1; res UNMEASURED '["r9"]';   [ "$(v "$C")" = ERROR ] || fail "없는 증거 ID → ERROR 아님"
+rec 2 true r1; res UNMEASURED '["r9"]';   [ "$(v "$C")" = FAIL ] || fail "없는 증거 ID(날조) → FAIL 아님"
 rec 0 true r1; res PASS '["r1"]';         [ "$(v "$P")" = PASS ] || fail "PASS 일치 → PASS 아님"
 rec 1 true r1; res PASS '["r1"]';         [ "$(v "$P")" = FAIL ] || fail "exit≠0 인데 PASS → FAIL 아님"
 rec 2 true r1; printf '{"type":"result",' > "$T/r.json"; [ "$(v "$C")" = ERROR ] || fail "잘린 JSON → ERROR 아님"
 rec 2 true r1; rm "$T/r.json";            [ "$(v "$C")" = ERROR ] || fail "결과 없음 → ERROR 아님"
-rec 2 true r1; jq -n '{type:"result",is_error:true,result:"budget exceeded"}' > "$T/r.json"; [ "$(v "$C")" = ERROR ] || fail "is_error → ERROR 아님"
-rec 2 true r1; jq -n '{type:"result",is_error:false,structured_output:{evidence:["r1"]}}' > "$T/r.json"; [ "$(v "$C")" = ERROR ] || fail "status 없음 → ERROR 아님"
+# 모델 귀책은 FAIL — 예산·턴·구조화 출력 재시도 소진·timeout. 러너 귀책만 ERROR
+err() { rec 2 true r1; jq -n --arg s "$1" '{type:"result",subtype:$s,is_error:true,result:$s}' > "$T/r.json"; v "$C"; }
+[ "$(err error_max_budget_usd)" = FAIL ] || fail "budget 소진 → FAIL 아님"
+[ "$(err error_max_turns)" = FAIL ] || fail "max_turns → FAIL 아님"
+[ "$(err error_max_structured_output_retries)" = FAIL ] || fail "구조화 출력 재시도 소진 → FAIL 아님"
+[ "$(err error_timeout)" = FAIL ] || fail "timeout → FAIL 아님"
+[ "$(err error_during_execution)" = ERROR ] || fail "실행 중 오류(러너 귀책) → ERROR 아님"
+rec 2 true r1; jq -n '{type:"result",is_error:false,structured_output:{evidence:["r1"]}}' > "$T/r.json"; [ "$(v "$C")" = FAIL ] || fail "status 없음(구조화 출력 누락) → FAIL 아님"
 
 # 영수증 기록기 — make 안에서는 via_make true, 밖에서는 false
 : > "$T/rc.jsonl"

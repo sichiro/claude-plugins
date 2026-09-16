@@ -1,5 +1,5 @@
 ---
-name: ablate
+name: hn-ablate
 description: 하네스 파일 하나를 뺀 후보를 만들어 기준선과 반복 비교한다 — 그 파일이 없어도 성적이 같은지 잰다. "이 규칙 없어도 되나" · "ablation" · "규칙 삭제 후보" 지시에 쓴다. 승격은 하지 않는다
 ---
 
@@ -9,7 +9,7 @@ description: 하네스 파일 하나를 뺀 후보를 만들어 기준선과 반
 
 「로드되지 않는 규칙」(`metrics.sh` 의 `rules_never_loaded`)과 「없어도 되는 규칙」은 다르다. 항상 로드되는 규칙은 전자로 잡히지 않는다. 이 스킬이 후자를 잰다.
 
-**저장소별 값.** base 브랜치와 봉인 묶음 경로는 `/harness:propose` 와 같은 규칙이다 — base 는 `.claude/wt.md` 의 값(없으면 `gh repo view --json defaultBranchRef -q .defaultBranchRef.name`), 봉인 묶음은 `~/.claude/harness-evals/<저장소명>/sealed`(없으면 `--sealed` 생략).
+**저장소별 값.** base 브랜치와 봉인 묶음 경로는 `/harness:hn-propose` 와 같은 규칙이다 — base 는 `.claude/wt.md` 의 값(없으면 `gh repo view --json defaultBranchRef -q .defaultBranchRef.name`), 봉인 묶음은 `~/.claude/harness-evals/<저장소명>/sealed`(없으면 `--sealed` 생략).
 
 **비용을 먼저 말한다.** 사례 수 × 반복 3 × (기준선 + 후보) 회. 사례 10개면 60회, 약 25 USD, 30~60분. 사용자가 받아들이면 진행한다.
 
