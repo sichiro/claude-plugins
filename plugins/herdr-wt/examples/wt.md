@@ -32,4 +32,5 @@
 
 ## 에이전트
 
+- claude 는 `--model opus` 로 띄운다 — `herdr agent start ... -- --model opus`. 인자에 `--kind` 가 없을 때의 기본이다
 - codex 는 `--yolo` 대신 `--add-dir` 로 범위를 좁힌다
