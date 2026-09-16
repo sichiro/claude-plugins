@@ -7,6 +7,7 @@ fail() { echo "FAIL test-run: $1"; exit 1; }
 # 임시 프로젝트 — 하네스(CLAUDE.md · .claude/rules · settings.json) + 사례 하나
 P="$T/proj"; C="$P/.claude/harness/cases/ok-all"; mkdir -p "$P/.claude/rules" "$C/fixture"
 echo '# proj' > "$P/CLAUDE.md"; echo r > "$P/.claude/rules/r.md"
+mkdir -p "$P/.claude/handoff"; echo h > "$P/.claude/handoff/h.md"
 printf '{"enabledPlugins":{"harness@sichiro":true},"permissions":{"allow":["Bash(make *)"]}}' > "$P/.claude/settings.json"
 echo 'make check 를 실행하고 판정하라' > "$C/prompt.md"
 printf '{"status":"PASS","require_targets":["check"]}' > "$C/expect.json"
@@ -23,6 +24,7 @@ run --materialize "$C" "$T/work" --harness "$SHA" || fail "materialize exit $?"
 [ -d "$T/work/.claude/rules" ] || fail ".claude/rules 없음"
 [ "$(find "$T/work" -name expect.json | wc -l | tr -d ' ')" = 0 ] || fail "정답이 work 에 있다"
 [ -e "$T/work/.claude/harness" ] && fail "프로젝트 데이터(.claude/harness)가 work 에 있다"
+[ -e "$T/work/.claude/handoff" ] && fail "handoff 문서가 work 에 있다 — 하네스 트리 밖이다"
 jq -e '.enabledPlugins' "$T/work/.claude/settings.json" >/dev/null 2>&1 && fail "enabledPlugins 가 남아 있다 — 클린룸이 깨진다"
 jq -e '.permissions.allow[0]=="Bash(make *)"' "$T/work/.claude/settings.json" >/dev/null || fail "settings.json 의 다른 키가 사라졌다"
 # 없는 해시는 시작 전에 거부한다 (archive 실패가 파이프에서 묻히는 구멍)

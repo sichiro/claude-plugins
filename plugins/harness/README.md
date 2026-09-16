@@ -44,7 +44,7 @@
 
 ## 게이트
 
-`gh pr create` · `gh pr merge` 에서 브랜치가 하네스(`.claude/` · `CLAUDE.md`, `.claude/harness/{observations,proposals,reports}` 제외)를 건드렸으면 유효한 보고서를 요구한다. 유효 조건 — `base_sha` 가 PR base 와 같다 · `evaluated_sha` 이후 하네스 트리 변경 없음 · `suite_sha` 가 대상의 `.claude/harness/cases` 트리와 같다 · 사례 집합이 `cases/` ∪ `sealed.manifest` 와 같다 · `regressed` · `errors` 가 비었다. base 는 명령의 `--base`, 없으면 GitHub 기본 브랜치다. `--repo` · `--head` 형태는 거부한다.
+`gh pr create` · `gh pr merge` 에서 브랜치가 하네스(`.claude/` · `CLAUDE.md`, `.claude/harness/{observations,proposals,reports}` · `.claude/handoff/` 제외)를 건드렸으면 유효한 보고서를 요구한다. 유효 조건 — `base_sha` 가 PR base 와 같다 · `evaluated_sha` 이후 하네스 트리 변경 없음 · `suite_sha` 가 대상의 `.claude/harness/cases` 트리와 같다 · 사례 집합이 `cases/` ∪ `sealed.manifest` 와 같다 · `regressed` · `errors` 가 비었다. base 는 명령의 `--base`, 없으면 GitHub 기본 브랜치다. `--repo` · `--head` 형태는 거부한다.
 
 ## 저장소별 값의 출처
 

@@ -38,6 +38,9 @@ mkdir -p "$R/.claude/harness/observations" "$R/.claude/harness/proposals"
 echo o > "$R/.claude/harness/observations/OBS-1.yaml"; echo i > "$R/.claude/harness/proposals/IMP-1.yaml"
 git -C "$R" add -A; git -C "$R" commit -q -m obs
 OUT=$(inp "gh pr create --base develop" | sh "$G" 2>&1); [ -z "$OUT" ] || fail "OBS·IMP 만 더했는데 deny: $OUT"
+# handoff 문서만 고친 변경도 하네스 변경이 아니다 → 통과
+mkdir -p "$R/.claude/handoff"; echo h > "$R/.claude/handoff/handoff-1.md"; git -C "$R" add -A; git -C "$R" commit -q -m handoff
+OUT=$(inp "gh pr create --base develop" | sh "$G" 2>&1); [ -z "$OUT" ] || fail "handoff 만 고쳤는데 deny: $OUT"
 # 하네스 변경, 보고서 없음 → deny
 echo r > "$R/.claude/rules/r.md"; git -C "$R" add -A; git -C "$R" commit -q -m r
 OUT=$(inp "gh pr create --base develop" | sh "$G"); printf '%s' "$OUT" | grep -q '"deny"' || fail "보고서 없는데 통과"

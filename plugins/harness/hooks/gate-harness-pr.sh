@@ -55,7 +55,7 @@ else
   BASE=$(G rev-parse --verify -q "origin/$BASE_NAME" || G rev-parse --verify -q "$BASE_NAME") || deny "base 브랜치를 찾지 못했다: $BASE_NAME"
 fi
 
-G diff --quiet "$BASE" "$TARGET" -- .claude CLAUDE.md ':!.claude/harness/observations' ':!.claude/harness/proposals' ':!.claude/harness/reports' 2>/dev/null && exit 0
+G diff --quiet "$BASE" "$TARGET" -- .claude CLAUDE.md ':!.claude/harness/observations' ':!.claude/harness/proposals' ':!.claude/harness/reports' ':!.claude/handoff' 2>/dev/null && exit 0
 
 SUITE=$(G rev-parse --verify -q "$TARGET:.claude/harness/cases" 2>/dev/null || echo none)
 WANT=$( { G ls-tree -d --name-only "$TARGET" .claude/harness/cases/ 2>/dev/null | while read -r p; do basename "$p"; done
@@ -69,7 +69,7 @@ for f in $FILES; do
     || { REASON="$f: 보고서 형식이 아니다 (report.sh 가 만든 것이 아니다)"; continue; }
   EV=$(printf '%s' "$J" | jq -r '.evaluated_sha // ""'); BS=$(printf '%s' "$J" | jq -r '.base_sha // ""')
   [ "$BS" = "$BASE" ] || { REASON="$f: base_sha 가 base($BASE)와 다르다"; continue; }
-  G diff --quiet "$EV" "$TARGET" -- .claude CLAUDE.md ':!.claude/harness/observations' ':!.claude/harness/proposals' ':!.claude/harness/reports' 2>/dev/null || { REASON="$f: evaluated_sha 이후 하네스가 바뀌었다 — 다시 평가한다"; continue; }
+  G diff --quiet "$EV" "$TARGET" -- .claude CLAUDE.md ':!.claude/harness/observations' ':!.claude/harness/proposals' ':!.claude/harness/reports' ':!.claude/handoff' 2>/dev/null || { REASON="$f: evaluated_sha 이후 하네스가 바뀌었다 — 다시 평가한다"; continue; }
   [ "$(printf '%s' "$J" | jq -r '.suite_sha // ""')" = "$SUITE" ] || { REASON="$f: suite_sha 가 대상의 harness/cases 트리와 다르다"; continue; }
   HAVE=$(printf '%s' "$J" | jq -r '.cases[].case' | sort -u)
   [ "$HAVE" = "$WANT" ] || { REASON="$f: 보고서의 사례 목록이 suite(cases + sealed.manifest)와 다르다"; continue; }

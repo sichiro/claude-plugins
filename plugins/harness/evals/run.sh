@@ -4,7 +4,7 @@
 #   run.sh --materialize <case dir> <work dir> --harness <sha>      (테스트용)
 #   run.sh --sealed-manifest <dir>                                  (봉인 묶음 manifest 를 stdout 에)
 # 필요 도구: jq · git · shasum. 실제 모델 평가 경로에서만 claude 와 timeout(GNU coreutils — gtimeout 도 본다)을 더 요구한다.
-# 평가 대상의 cwd 에는 하네스(.claude · CLAUDE.md — .claude/harness 제외, settings.json 의 enabledPlugins 제거)와 fixture 만 있다. 정답·grader 는 없다.
+# 평가 대상의 cwd 에는 하네스(.claude · CLAUDE.md — .claude/harness · .claude/handoff 제외, settings.json 의 enabledPlugins 제거)와 fixture 만 있다. 정답·grader 는 없다.
 # 저장소 루트는 CLAUDE_PROJECT_DIR, 없으면 cwd 의 git toplevel 이다. 평가기는 플러그인(이 스크립트의 디렉터리)에 있다.
 # --repeat N: 사례마다 N 회 돌린다. results.jsonl 의 줄에 run(1..N) 이 붙고 N>1 이면 파일명에 .r<i> 가 붙는다.
 # meta.json 은 실행이 끝난 뒤 쓴다 — model(첫 실제 결과의 modelUsage 중 출력 토큰 최대 키)·claude_version 이 그때 정해진다.
@@ -55,7 +55,7 @@ materialize() { # <case dir> <work dir>
   TARF=$(mktemp)   # PATHS 검사 뒤에 만든다 — 앞에서 만들면 exit 2 가 임시 파일을 남긴다
   git -C "$ROOT" archive -o "$TARF" "$SHA" -- $PATHS   # 파이프가 아니라 파일로 — 실패가 rc 에 남는다
   tar -xf "$TARF" -C "$2"; rm -f "$TARF"
-  rm -rf "$2/.claude/harness"
+  rm -rf "$2/.claude/harness" "$2/.claude/handoff"   # 프로젝트 데이터와 인수인계 문서는 하네스 트리 밖이다
   # 프로젝트 수준으로 켠 플러그인이 평가 대상 세션에 실리지 않게 한다 — 클린룸
   if [ -f "$2/.claude/settings.json" ]; then
     jq 'del(.enabledPlugins)' "$2/.claude/settings.json" > "$2/.claude/settings.json.tmp" && mv "$2/.claude/settings.json.tmp" "$2/.claude/settings.json"
