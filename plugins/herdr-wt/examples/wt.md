@@ -32,7 +32,7 @@
 
 ## 에이전트
 
-- claude 는 `--model opus` 로 띄운다 — `herdr agent start ... -- --model opus`. 인자에 `--kind` 가 없을 때의 기본이다
+- claude 는 `--model opus` 로 띄운다. 인자에 `--kind` 가 없을 때의 기본이다 — 값만 적는다. 그 값을 넘기는 명령은 환경마다 달라 스킬의 reference 가 정한다
 - codex 는 `--yolo` 대신 `--add-dir` 로 범위를 좁힌다
 
 ## 첫 지시

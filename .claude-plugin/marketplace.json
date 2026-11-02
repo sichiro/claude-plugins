@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "herdr-wt",
-      "description": "herdr worktree 로 이슈 하나를 준비하고(wt) 마감한다(wt-done). 이슈 트래커·머지 정책 같은 저장소별 지침은 .claude/wt.md 에서 읽는다",
+      "description": "herdr worktree 로 이슈 하나를 준비하고(wt) 마감한다(wt-done) — herdr TUI 와 Herdr 앱 둘 다. 이슈 트래커·머지 정책 같은 저장소별 지침은 .claude/wt.md 에서 읽는다",
       "source": "./plugins/herdr-wt",
       "category": "productivity"
     },
