@@ -36,7 +36,7 @@ herdr agent start <에이전트 이름> --kind <kind> --pane <root pane> [-- <�
 herdr pane send-text <root pane> "<초안>"
 ```
 
-`send-text` 가 Enter 없이 글자만 넣는지는 이 판에서 재지 않았다(herdr TUI 밖에서 작성했다). 첫 사용 때 `herdr agent read <에이전트 이름> --source visible` 로 입력칸에 글이 남았는지, 실행되지 않았는지 확인하고, 실행돼 버렸으면 그 사실을 보고한다. Claude Code 는 줄바꿈이 있거나 긴 글을 `[Pasted text #1 +N lines]` 로 접으므로 초안은 줄바꿈 없이 300자 안팎으로 쓴다.
+`send-text` 가 Enter 없이 글자만 넣는지는 이 판에서 재지 않았다(herdr TUI 밖에서 작성했다). 첫 사용 때 `herdr agent read <에이전트 이름> --source visible` 로 입력칸에 글이 남았는지, 실행되지 않았는지 확인하고, 실행돼 버렸으면 그 사실을 보고한다.
 
 **바로 실행(`--prompt`)**
 
