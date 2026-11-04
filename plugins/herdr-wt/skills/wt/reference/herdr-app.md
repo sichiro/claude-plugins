@@ -12,9 +12,10 @@ git 으로 직접 만든다. 경로는 앱의 worktree 모드와 같은 규칙�
 M=<메인 체크아웃>; B=<브랜치>; BASE=<base>
 P="$HOME/.herdr/worktrees/$(basename "$M")/$(printf %s "$B" | sed -E 's/[^A-Za-z0-9._-]+/-/g; s/^-+|-+$//g')"
 git -C "$M" fetch origin "$BASE"
-git -C "$M" worktree add -b "$B" "$P" "origin/$BASE"
+git -C "$M" worktree add --no-track -b "$B" "$P" "origin/$BASE"
 ```
 
+- `--no-track` 을 빼지 않는다 — 원격 브랜치에서 가르면 git 이 새 브랜치가 그 base 를 추적하게 잡는다. 그러면 `status` 의 앞섬·뒤처짐이 base 기준으로 나오고 `pull` 이 base 를 끌어온다. 추적은 첫 `push -u` 가 제 이름으로 잡는다
 - 슬러그는 영숫자·`.`·`_`·`-` 밖의 문자를 `-` 로 바꾼 것이다 — `fix/mgr135-x` → `fix-mgr135-x`
 - **앱 화면의 New worktree 는 쓰지 않는다** — 지금 체크아웃의 `HEAD` 에서 갈라 base 를 고를 수 없다
 - 이 단계는 space 를 만들지 않는다. 저장소 지침의 생성 직후 할 일을 마친 뒤 다음 절로 간다
