@@ -83,6 +83,12 @@ hc get <주소> --json            # status.state 가 working 인가
 
 `hc run` 으로 띄우면 포커스가 옮겨지지 않는다. `옮겨줘` 면 `herdr-app do space.select --id $SP`.
 
+앱이 다른 기기에서 돌면(`command -v herdr-app` 이 비면) 이 기기에 `herdr-app` 이 없다. 그때는 앱 기기로 SSH 해서 부르고, space id 앞에 앱이 이 core 를 부르는 이름을 붙인다(`mini/sp…`). 접속 주소(`HERDR_APP_SSH`)와 이름 구하는 법은 wt-done 의 `reference/herdr-app.md` 「앱이 어느 기기에 있나」 절을 따른다.
+
+```
+ssh -o BatchMode=yes "$HERDR_APP_SSH" '~/.local/bin/herdr-app' do space.select --id "<기기 이름>/$SP"
+```
+
 ## 이미 띄운 터미널을 사이드바에 올리기
 
 라벨 없이 `hc run` 으로 띄운 터미널은 사이드바에 나오지 않는다. 앱이 모르는 id 를 붙이면 새 space 로 올라온다.
