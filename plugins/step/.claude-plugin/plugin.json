@@ -1,0 +1,8 @@
+{
+  "name": "step",
+  "description": "OneMoreStep — 개인 작업 방식 스킬 묶음. 스킬은 /step:<이름> 으로 부른다",
+  "version": "0.1.0",
+  "author": {
+    "name": "junghosuh"
+  }
+}

@@ -18,6 +18,12 @@
       "description": "자기 개선 하네스 루프 — 원장 → 관찰(OBS) → 제안(IMP) → eval 비교 → 보고서 → PR 게이트. 프로젝트 데이터는 .claude/harness/ 하나다",
       "source": "./plugins/harness",
       "category": "productivity"
+    },
+    {
+      "name": "step",
+      "description": "OneMoreStep — 개인 작업 방식 스킬 묶음. 스킬은 /step:<이름> 으로 부른다",
+      "source": "./plugins/step",
+      "category": "productivity"
     }
   ]
 }

@@ -1,15 +1,16 @@
 # sichiro — Claude Code 플러그인 마켓플레이스
 
-개인 Claude Code 플러그인 모음이다. `herdr-wt` 와 `harness` 둘을 담는다.
+개인 Claude Code 플러그인 모음이다. `herdr-wt` · `harness` · `step` 셋을 담는다.
 
 ## 설치
 
-Claude Code 안에서 두 명령을 차례로 실행한다.
+Claude Code 안에서 마켓플레이스를 추가한 뒤 쓸 플러그인을 설치한다.
 
 ```
 /plugin marketplace add sichiro/claude-plugins
 /plugin install herdr-wt@sichiro
 /plugin install harness@sichiro
+/plugin install step@sichiro
 ```
 
 ## herdr-wt
@@ -47,6 +48,16 @@ cp plugins/herdr-wt/examples/wt.md <저장소>/.claude/wt.md
 자기 개선 하네스 엔진이다. 세션 원장을 모으고(`hooks/collect.sh`), 반복 실패를 관찰해 OBS 로 쓰고(`/harness:observe`), 변경 하나를 제안해 eval 로 기준선과 비교하고(`/harness:propose`), 보고서 없는 하네스 PR 을 막는다(`gh pr create` 게이트). 프로젝트에 남는 것은 `.claude/harness/` 한 디렉터리다. 준비 절차와 게이트 조건은 `plugins/harness/README.md` 에 있다.
 
 이 저장소 자신이 첫 적용 대상이다 — `.claude/harness/cases/` 에 사례가 있고 검증 동사는 `make check` 다.
+
+## step
+
+OneMoreStep 이다. 개인 작업 방식을 스킬로 담는 묶음이며, 스킬은 `/step:<이름>` 으로 부른다. 사용자가 부를 때만 실행된다.
+
+- `prompt-check` — 업무 지시 프롬프트를 보내기 전에 다섯 칸(목표 · 완료 판정 · 보여 줄 증거 · 이미 아는 것 · 제약)과 빼야 할 두 가지(방법 지정 · 원인 추측)를 판정하고, 빠진 칸만 메운 판을 낸다. 프롬프트 밖에서만 알 수 있는 값은 지어내지 않고 묻는다
+
+```
+/step:prompt-check csv 내보내기가 어제 배포 뒤로 마지막 행을 빠뜨린다. 고쳐줘
+```
 
 ## 검사
 
