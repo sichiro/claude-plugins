@@ -1,0 +1,9 @@
+{
+  "name": "todo",
+  "version": "0.1.0",
+  "description": "claude-mem 할 일 목록을 사람 차례와 Claude 작업으로 갈라 pane 에 보인다",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "junghosuh"
+  }
+}

@@ -24,6 +24,12 @@
       "description": "OneMoreStep — 개인 작업 방식 스킬 묶음. 스킬은 /step:<이름> 으로 부른다",
       "source": "./plugins/step",
       "category": "productivity"
+    },
+    {
+      "name": "todo",
+      "description": "claude-mem 할 일 목록을 사람 차례와 Claude 작업으로 갈라 pane 에 보인다. /todo 로 열고 닫는다",
+      "source": "./plugins/todo",
+      "category": "productivity"
     }
   ]
 }
