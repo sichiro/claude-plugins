@@ -8,6 +8,8 @@ INPUT=$(cat) || exit 0
 command -v jq >/dev/null 2>&1 || exit 0
 printf '%s' "$INPUT" | jq -e . >/dev/null 2>&1 || exit 0
 ROOT=${CLAUDE_PROJECT_DIR:-.}
+# opt-in — 평가할 사례가 있는 저장소(cases/ 하위 디렉터리 또는 sealed.manifest 항목)만 수집한다. 게이트와 같은 판정이다
+[ -n "$(ls -d "$ROOT"/.claude/harness/cases/*/ 2>/dev/null)" ] || [ -s "$ROOT/.claude/harness/sealed.manifest" ] || exit 0
 DIR="$ROOT/.claude/harness/runs"
 mkdir -p "$DIR" 2>/dev/null || exit 0
 SID=$(printf '%s' "$INPUT" | jq -r '.session_id // "unknown"')

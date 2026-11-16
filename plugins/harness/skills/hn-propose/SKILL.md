@@ -1,5 +1,5 @@
 ---
-name: propose
+name: hn-propose
 description: OBS 하나로 하네스 변경 하나를 브랜치와 IMP 로 만들고 eval 로 기준선과 비교한다. "OBS-… 제안해줘" · "하네스 개선안" 지시에 쓴다. 승격은 하지 않는다
 ---
 

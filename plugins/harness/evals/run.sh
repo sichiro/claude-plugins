@@ -95,13 +95,17 @@ run_case() { # <case dir> <run index>
     for t in $(jq -r '.require_targets[]?' "$1/expect.json"); do ( cd "$work" && EVAL_RECEIPTS="$rec" make "$t" >/dev/null 2>&1 ) || true; done
     cp "$1/dry-run.result.json" "$res" 2>/dev/null || : > "$res"
   else
+    rc=0
     ( cd "$work" && EVAL_RECEIPTS="$rec" CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 \
       "$TIMEOUT" 300 claude -p "$(cat "$1/prompt.md")" \
         --output-format json --json-schema "$SCHEMA" \
         --setting-sources project --settings "$E/settings.json" \
         --allowedTools Bash,Read,Grep --max-turns 15 --max-budget-usd 1 --no-session-persistence \
-        > "$res" 2> "$stem.stderr" ) || true
-    if [ "$MODEL" = none ] && [ -s "$res" ]; then
+        > "$res" 2> "$stem.stderr" ) || rc=$?
+    # timeout(124)으로 끊기면 결과 파일이 비어 러너 오류로 보인다 — 모델 귀책이므로 error_timeout 결과를 남긴다. 다른 실패는 claude 가 쓴 결과(is_error)를 그대로 본다
+    if [ "$rc" = 124 ]; then printf '{"type":"result","subtype":"error_timeout","is_error":true,"result":"timeout 300s"}\n' > "$res"; fi
+    # 첫 실제 결과에서 모델을 읽는다 — timeout 결과에는 modelUsage 가 없어 unknown 이 되므로 다음 사례에서 다시 본다
+    if { [ "$MODEL" = none ] || [ "$MODEL" = unknown ]; } && [ -s "$res" ]; then
       MODEL=$(jq -r '(.modelUsage // {}) | to_entries | map(select(.value.outputTokens != null)) | max_by(.value.outputTokens) | .key // "unknown"' "$res" 2>/dev/null || echo unknown)
       [ -n "$MODEL" ] || MODEL=unknown
     fi
