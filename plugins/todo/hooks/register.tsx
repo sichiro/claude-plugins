@@ -71,7 +71,8 @@ export const register: Register = on => {
     // 쓰기는 이미 끝났다 — 비추다 실패해도 훅이 실패로 끝나 그 호출을 건드리지 않게 삼킨다.
     try {
       await update($, board, b => apply(b, list, fields as Record<string, unknown>))
-      void $.ui.open({ id: PANE, title: TITLE })
+      // 기다리지 않고 여는 호출이라 try 가 못 잡는다 — 거부(다른 mod 가 쥐었거나 막았을 때)는 여기서 삼킨다.
+      void $.ui.open({ id: PANE, title: TITLE }).catch(() => {})
     } catch {}
 
     return ran
