@@ -51,6 +51,17 @@ test('실패한 쓰기는 비추지 않는다', async ($, on) => {
   await ui.unmount()
 })
 
+test('pane 열기가 거부돼도 쓰기는 비춘다', async ($, on) => {
+  on('ui.open', () => ({ deny: 'held by other' }))
+  on('tool.call', () => ({ result: {} }))
+
+  // 처리되지 않은 거부가 남으면 하네스가 이 파일을 실패시킨다
+  await $.tool.call({ tool: WRITE, list: 'x', fields: { task: 'a', status: 'todo' } })
+  const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
+  expect((await ui.find({ type: 'Text', text: /a$/ }))?.text).toBe('☐ a')
+  await ui.unmount()
+})
+
 test('/todo — 보이는 중이면 닫고, 없거나 탭 뒤에 있으면 연다', async ($, on) => {
   const calls: string[] = []
   let panes: { isShown: boolean }[] = []
