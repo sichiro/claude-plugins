@@ -1,3 +1,5 @@
 .DS_Store
 docs/superpowers/
 .claude/harness/runs/
+# 엔진이 적재할 때 쓰는 타입 — 그 장비에 연결된 MCP 도구 이름이 들어간다
+plugins/*/.claude-plugin/types/

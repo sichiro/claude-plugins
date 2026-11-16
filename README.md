@@ -1,6 +1,6 @@
 # sichiro — Claude Code 플러그인 마켓플레이스
 
-개인 Claude Code 플러그인 모음이다. `herdr-wt` · `harness` · `step` 셋을 담는다.
+개인 Claude Code 플러그인 모음이다. `herdr-wt` · `harness` · `step` · `todo` 넷을 담는다.
 
 ## 설치
 
@@ -11,6 +11,7 @@ Claude Code 안에서 마켓플레이스를 추가한 뒤 쓸 플러그인을 �
 /plugin install herdr-wt@sichiro
 /plugin install harness@sichiro
 /plugin install step@sichiro
+/plugin install todo@sichiro
 ```
 
 ## herdr-wt
@@ -58,6 +59,25 @@ OneMoreStep 이다. 개인 작업 방식을 스킬로 담는 묶음이며, 스�
 ```
 /step:prompt-check csv 내보내기가 어제 배포 뒤로 마지막 행을 빠뜨린다. 고쳐줘
 ```
+
+## todo
+
+할 일 목록을 「사람 차례」와 「Claude 작업」 두 구역으로 갈라 pane 에 보이는 mod 다. 스킬이 아니라 hooks 모듈(`plugins/todo/hooks/register.tsx`)이다.
+
+- `/todo` — pane 이 보이는 중이면 닫고, 아니면 연다
+- Claude 가 할 일을 적으면 pane 이 스스로 열린다. 터미널 폭이 좁으면 `/todo` 를 칠 때까지 기다린다
+
+```
+/todo
+```
+
+전제와 한계는 다음과 같다.
+
+- [claude-mem](https://github.com/thedotmack/claude-mem) 의 `work_state_write` 호출을 비춘다. claude-mem 이 없으면 pane 은 늘 비어 있다
+- 시스템 프롬프트 끝에 한 줄을 붙인다 — 사용자가 직접 실행할 단계는 `fields` 에 `who: "user"` 를 넣으라는 규약이다. 그 항목이 「사람 차례」로 간다
+- 그 세션에서 본 쓰기만 보인다. 이전 세션에서 열어 둔 항목은 보이지 않는다
+
+시험은 `claude plugin test plugins/todo` 로 실행한다 — `make check` 는 이 시험을 돌리지 않는다.
 
 ## 검사
 
